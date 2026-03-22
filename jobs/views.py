@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
 from .models import Job, Application
 from .forms import RegisterForm, JobForm, ApplicationForm
 
@@ -92,12 +94,28 @@ def apply(request, pk):
         return redirect('job_detail', pk=pk)
 
     if request.method == 'POST':
-        form = ApplicationForm(request.POST)
+        form = ApplicationForm(request.POST, request.FILES)
         if form.is_valid():
             application = form.save(commit=False)
             application.job = job
             application.applicant = request.user
             application.save()
+
+            # Notify the employer by email
+            send_mail(
+                subject=f'New application for "{job.title}"',
+                message=(
+                    f'Hi {job.posted_by.username},\n\n'
+                    f'{request.user.username} has applied for your job "{job.title}" at {job.company}.\n\n'
+                    f'Log in to view their application:\n'
+                    f'http://127.0.0.1:8000/dashboard/applications/{job.pk}/\n\n'
+                    f'— Hirely Team'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[job.posted_by.email],
+                fail_silently=True,
+            )
+
             messages.success(request, f'Application submitted for {job.title}!')
             return redirect('my_applications')
     else:

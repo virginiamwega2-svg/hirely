@@ -24,6 +24,15 @@
                             <p class="mb-0"><strong>Cover Letter:</strong></p>
                             <p class="text-muted">{{ app.cover_letter }}</p>
                             <small class="text-muted">Applied {{ app.applied_at|timesince }} ago</small>
+                            {% if app.resume %}
+                                <div class="mt-2">
+                                    <a href="{{ app.resume.url }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-file-earmark-arrow-down"></i> Download Resume
+                                    </a>
+                                </div>
+                            {% else %}
+                                <small class="text-muted d-block mt-1">No resume uploaded</small>
+                            {% endif %}
                         </div>
                         <div class="text-end">
                             {% if app.status == 'pending' %}
