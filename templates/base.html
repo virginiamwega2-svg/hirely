@@ -21,6 +21,7 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'job_list' %}">Jobs</a></li>
                     {% if user.is_authenticated %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'my_applications' %}">My Applications</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'employer_dashboard' %}">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout ({{ user.username }})</a></li>
                     {% else %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>

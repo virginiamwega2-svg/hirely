@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Job - Hirely{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-body p-4 text-center">
+                <h4 class="text-danger mb-3">Delete this job?</h4>
+                <p class="mb-1"><strong>{{ job.title }}</strong></p>
+                <p class="text-muted">{{ job.company }} &mdash; {{ job.location }}</p>
+                <p class="text-muted">This will also delete all applications for this job.</p>
+                <form method="post" class="d-flex gap-2 justify-content-center mt-4">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <a href="{% url 'employer_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

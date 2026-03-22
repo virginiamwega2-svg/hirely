@@ -109,3 +109,57 @@ def apply(request, pk):
 def my_applications(request):
     applications = Application.objects.filter(applicant=request.user)
     return render(request, 'jobs/my_applications.html', {'applications': applications})
+
+
+# --- Employer Views ---
+
+@login_required
+def employer_dashboard(request):
+    jobs = Job.objects.filter(posted_by=request.user)
+    return render(request, 'jobs/employer_dashboard.html', {'jobs': jobs})
+
+
+@login_required
+def post_job(request):
+    if request.method == 'POST':
+        form = JobForm(request.POST)
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.posted_by = request.user
+            job.save()
+            messages.success(request, 'Job posted successfully!')
+            return redirect('employer_dashboard')
+    else:
+        form = JobForm()
+    return render(request, 'jobs/job_form.html', {'form': form, 'title': 'Post a Job'})
+
+
+@login_required
+def edit_job(request, pk):
+    job = get_object_or_404(Job, pk=pk, posted_by=request.user)
+    if request.method == 'POST':
+        form = JobForm(request.POST, instance=job)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Job updated successfully!')
+            return redirect('employer_dashboard')
+    else:
+        form = JobForm(instance=job)
+    return render(request, 'jobs/job_form.html', {'form': form, 'title': 'Edit Job'})
+
+
+@login_required
+def delete_job(request, pk):
+    job = get_object_or_404(Job, pk=pk, posted_by=request.user)
+    if request.method == 'POST':
+        job.delete()
+        messages.success(request, 'Job deleted.')
+        return redirect('employer_dashboard')
+    return render(request, 'jobs/delete_job.html', {'job': job})
+
+
+@login_required
+def job_applications(request, pk):
+    job = get_object_or_404(Job, pk=pk, posted_by=request.user)
+    applications = job.applications.all()
+    return render(request, 'jobs/job_applications.html', {'job': job, 'applications': applications})

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Applicants for {{ job.title }} - Hirely{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>Applicants</h2>
+        <p class="text-muted mb-0">{{ job.title }} &mdash; {{ job.company }}</p>
+    </div>
+    <a href="{% url 'employer_dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+</div>
+
+{% if applications %}
+    <div class="row g-3">
+        {% for app in applications %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-1">{{ app.applicant.username }}</h5>
+                            <p class="text-muted mb-2">{{ app.applicant.email }}</p>
+                            <p class="mb-0"><strong>Cover Letter:</strong></p>
+                            <p class="text-muted">{{ app.cover_letter }}</p>
+                            <small class="text-muted">Applied {{ app.applied_at|timesince }} ago</small>
+                        </div>
+                        <div class="text-end">
+                            {% if app.status == 'pending' %}
+                                <span class="badge bg-warning text-dark fs-6">Pending</span>
+                            {% elif app.status == 'reviewed' %}
+                                <span class="badge bg-info fs-6">Reviewed</span>
+                            {% elif app.status == 'accepted' %}
+                                <span class="badge bg-success fs-6">Accepted</span>
+                            {% elif app.status == 'rejected' %}
+                                <span class="badge bg-danger fs-6">Rejected</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <p class="text-muted fs-5">No applications yet for this job.</p>
+    </div>
+{% endif %}
+{% endblock %}

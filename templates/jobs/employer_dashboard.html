@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Employer Dashboard - Hirely{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Job Postings</h2>
+    <a href="{% url 'post_job' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Post a Job
+    </a>
+</div>
+
+{% if jobs %}
+    <div class="row g-3">
+        {% for job in jobs %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">
+                            {{ job.title }}
+                            {% if job.is_active %}
+                                <span class="badge bg-success ms-2">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary ms-2">Inactive</span>
+                            {% endif %}
+                        </h5>
+                        <p class="text-muted mb-1">
+                            <i class="bi bi-building"></i> {{ job.company }} &nbsp;
+                            <i class="bi bi-geo-alt"></i> {{ job.location }} &nbsp;
+                            <i class="bi bi-people"></i> {{ job.applications.count }} application{{ job.applications.count|pluralize }}
+                        </p>
+                        <small class="text-muted">Posted {{ job.created_at|timesince }} ago</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'job_applications' job.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-people"></i> Applicants
+                        </a>
+                        <a href="{% url 'edit_job' job.pk %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href="{% url 'delete_job' job.pk %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <p class="text-muted fs-5">You haven't posted any jobs yet.</p>
+        <a href="{% url 'post_job' %}" class="btn btn-primary">Post Your First Job</a>
+    </div>
+{% endif %}
+{% endblock %}
