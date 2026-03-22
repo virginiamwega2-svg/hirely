@@ -6,26 +6,61 @@
     <title>{% block title %}Hirely{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; }
+        .navbar-brand { font-size: 1.5rem; letter-spacing: 1px; }
+        .hero { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: white; padding: 80px 0; }
+        .job-card { transition: transform 0.2s, box-shadow 0.2s; border: none; }
+        .job-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important; }
+        .badge { font-weight: 500; }
+        footer { background: #212529; color: #adb5bd; }
+        .btn-primary { background-color: #0d6efd; border: none; }
+        .stat-card { border-left: 4px solid #0d6efd; }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'home' %}">Hirely</a>
+            <a class="navbar-brand fw-bold text-primary" href="{% url 'home' %}">
+                <i class="bi bi-briefcase-fill"></i> Hirely
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'job_list' %}">Jobs</a></li>
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'job_list' %}">
+                            <i class="bi bi-search"></i> Browse Jobs
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
                     {% if user.is_authenticated %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'my_applications' %}">My Applications</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'employer_dashboard' %}">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout ({{ user.username }})</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'my_applications' %}">
+                                <i class="bi bi-file-earmark-text"></i> My Applications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'employer_dashboard' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-warning" href="{% url 'logout' %}">
+                                <i class="bi bi-box-arrow-right"></i> {{ user.username }}
+                            </a>
+                        </li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-                        <li class="nav-item"><a class="nav-link btn btn-primary text-white px-3" href="{% url 'register' %}">Sign Up</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-sm px-3" href="{% url 'register' %}">Sign Up</a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
@@ -35,7 +70,7 @@
     <!-- Messages -->
     <div class="container mt-3">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -43,12 +78,20 @@
     </div>
 
     <!-- Main Content -->
-    <main class="container my-4">
+    <main>
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-center text-muted py-4 border-top mt-5">
-        <p>&copy; 2025 Hirely. All rights reserved.</p>
+    <!-- Footer -->
+    <footer class="py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-1">
+                <a class="navbar-brand fw-bold text-primary" href="{% url 'home' %}">
+                    <i class="bi bi-briefcase-fill"></i> Hirely
+                </a>
+            </p>
+            <p class="small mb-0">&copy; 2025 Hirely. Connecting talent with opportunity.</p>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
