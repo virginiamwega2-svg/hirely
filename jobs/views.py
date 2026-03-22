@@ -75,3 +75,37 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('home')
+
+
+@login_required
+def apply(request, pk):
+    job = get_object_or_404(Job, pk=pk, is_active=True)
+
+    # Prevent applying to own job
+    if job.posted_by == request.user:
+        messages.error(request, 'You cannot apply to your own job posting.')
+        return redirect('job_detail', pk=pk)
+
+    # Prevent duplicate applications
+    if Application.objects.filter(job=job, applicant=request.user).exists():
+        messages.warning(request, 'You have already applied for this job.')
+        return redirect('job_detail', pk=pk)
+
+    if request.method == 'POST':
+        form = ApplicationForm(request.POST)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.job = job
+            application.applicant = request.user
+            application.save()
+            messages.success(request, f'Application submitted for {job.title}!')
+            return redirect('my_applications')
+    else:
+        form = ApplicationForm()
+    return render(request, 'jobs/apply.html', {'form': form, 'job': job})
+
+
+@login_required
+def my_applications(request):
+    applications = Application.objects.filter(applicant=request.user)
+    return render(request, 'jobs/my_applications.html', {'applications': applications})
