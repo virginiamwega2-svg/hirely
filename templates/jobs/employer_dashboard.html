@@ -1,57 +1,100 @@
 {% extends 'base.html' %}
 
-{% block title %}Employer Dashboard - Hirely{% endblock %}
+{% block title %}My Roles — Hirely{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>My Job Postings</h2>
-    <a href="{% url 'post_job' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Post a Job
-    </a>
-</div>
+<div class="container">
 
-{% if jobs %}
-    <div class="row g-3">
-        {% for job in jobs %}
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1">
-                            {{ job.title }}
-                            {% if job.is_active %}
-                                <span class="badge bg-success ms-2">Active</span>
-                            {% else %}
-                                <span class="badge bg-secondary ms-2">Inactive</span>
-                            {% endif %}
-                        </h5>
-                        <p class="text-muted mb-1">
-                            <i class="bi bi-building"></i> {{ job.company }} &nbsp;
-                            <i class="bi bi-geo-alt"></i> {{ job.location }} &nbsp;
-                            <i class="bi bi-people"></i> {{ job.applications.count }} application{{ job.applications.count|pluralize }}
-                        </p>
-                        <small class="text-muted">Posted {{ job.created_at|timesince }} ago</small>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'job_applications' job.pk %}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-people"></i> Applicants
-                        </a>
-                        <a href="{% url 'edit_job' job.pk %}" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                        <a href="{% url 'delete_job' job.pk %}" class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-trash"></i> Delete
-                        </a>
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">My Flexible Roles</h2>
+            <p class="text-muted mb-0">Parents are notified by email the moment they apply.</p>
+        </div>
+        <a href="{% url 'post_job' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Post a Flexible Role
+        </a>
+    </div>
+
+    {% if jobs %}
+        <div class="row g-3">
+            {% for job in jobs %}
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                    <h5 class="fw-semibold mb-0">{{ job.title }}</h5>
+                                    {% if job.is_active %}
+                                        <span class="badge bg-success">Live</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                    <span class="badge bg-{{ job.flex_colour }}">{{ job.flex_label }}</span>
+                                </div>
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-building"></i> {{ job.company }}
+                                    &nbsp;&middot;&nbsp;
+                                    <i class="bi bi-geo-alt"></i> {{ job.location }}
+                                </p>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="bi bi-clock"></i> {{ job.get_schedule_type_display }}
+                                    </span>
+                                    {% if job.is_remote %}
+                                        <span class="badge bg-info text-dark"><i class="bi bi-laptop"></i> Remote</span>
+                                    {% endif %}
+                                    {% if job.hours_per_day %}
+                                        <span class="badge bg-light text-dark border">{{ job.hours_per_day }} hrs/day</span>
+                                    {% endif %}
+                                    {% if job.salary %}
+                                        <span class="badge bg-success">{{ job.salary }}</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-people"></i>
+                                    <strong>{{ job.application_count }}</strong> application{{ job.application_count|pluralize }}
+                                    &nbsp;&middot;&nbsp;
+                                    Posted {{ job.created_at|timesince }} ago
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2 flex-shrink-0 align-self-center flex-wrap">
+                                <a href="{% url 'job_applications' job.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-people"></i> View Applicants
+                                </a>
+                                <a href="{% url 'edit_job' job.pk %}" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <a href="{% url 'delete_job' job.pk %}" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-briefcase display-1 text-muted"></i>
+            <h5 class="mt-3 fw-semibold">No roles posted yet</h5>
+            <p class="text-muted">Post your first flexible role and reach thousands of skilled parents.</p>
+            <a href="{% url 'post_job' %}" class="btn btn-primary btn-lg">Post a Flexible Role</a>
+        </div>
+    {% endif %}
+
+    <!-- Tips -->
+    {% if jobs %}
+    <div class="alert alert-light border mt-4 d-flex gap-3 align-items-start">
+        <i class="bi bi-info-circle-fill text-primary fs-5 flex-shrink-0 mt-1"></i>
+        <div class="small text-muted">
+            <strong class="text-dark">Get more applicants:</strong>
+            Roles tagged <em>Remote</em> receive significantly more applications.
+            If any home working is possible, tick it when posting.
+        </div>
     </div>
-{% else %}
-    <div class="text-center py-5">
-        <p class="text-muted fs-5">You haven't posted any jobs yet.</p>
-        <a href="{% url 'post_job' %}" class="btn btn-primary">Post Your First Job</a>
-    </div>
-{% endif %}
+    {% endif %}
+
+</div>
 {% endblock %}

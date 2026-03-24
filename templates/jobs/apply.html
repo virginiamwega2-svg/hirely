@@ -1,28 +1,93 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}Apply for {{ job.title }} - Hirely{% endblock %}
+{% block title %}Apply — {{ job.title }} — Hirely{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-7">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="mb-1">Apply for {{ job.title }}</h3>
-                <p class="text-muted mb-4">
-                    <i class="bi bi-building"></i> {{ job.company }} &nbsp;
-                    <i class="bi bi-geo-alt"></i> {{ job.location }}
-                </p>
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="d-flex gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">Submit Application</button>
-                        <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-secondary">Cancel</a>
-                    </div>
-                </form>
+<div class="container" style="max-width:520px;">
+    <div class="pt-4 pb-2 text-center">
+        <!-- Step indicator — reassures the parent this is almost over -->
+        <div class="step-pill mb-3">
+            <i class="bi bi-check-circle-fill"></i>
+            Almost done — one step left
+        </div>
+        <h2 class="fw-bold mb-1" style="font-size:1.5rem;">Apply for this role</h2>
+        <p class="text-quiet mb-0">
+            <strong style="color:var(--text);">{{ job.title }}</strong>
+            &nbsp;&middot;&nbsp; {{ job.company }}
+        </p>
+    </div>
+
+    <div class="card p-4 p-md-5 mt-3">
+
+        <!-- What they're applying to — quick reminder -->
+        <div class="p-3 rounded-3 mb-4 d-flex gap-3 align-items-center"
+             style="background:#f0f4ff; border:1px solid #dbe4ff;">
+            <i class="bi bi-lightning-fill" style="color:#2563eb; font-size:1.2rem;"></i>
+            <div style="font-size:.87rem;">
+                <div class="fw-semibold" style="color:var(--text);">{{ job.get_job_type_display }}
+                    {% if job.is_remote %}&nbsp;&middot;&nbsp; Remote{% endif %}
+                    {% if job.hours_per_week %}&nbsp;&middot;&nbsp; {{ job.hours_per_week }}{% endif %}
+                </div>
+                {% if job.salary %}
+                    <div class="text-quiet">Pay: {{ job.salary }}</div>
+                {% endif %}
             </div>
         </div>
+
+        <form method="post" enctype="multipart/form-data" id="applyForm">
+            {% csrf_token %}
+
+            <!-- Upload zone — large, tap-friendly, drag-and-drop ready -->
+            <div class="mb-4">
+                <label class="label-sm d-block mb-2">
+                    Your CV / Resume
+                    <span class="text-quiet fw-normal text-lowercase">&nbsp;(optional — skip if you don't have one handy)</span>
+                </label>
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" name="resume" id="resumeInput" accept=".pdf,.doc,.docx">
+                    <i class="bi bi-cloud-upload" style="font-size:2rem; color:var(--primary); opacity:.6;"></i>
+                    <p class="upload-label fw-semibold mt-2 mb-1" style="color:var(--text);">
+                        Tap to choose a file
+                    </p>
+                    <p class="text-quiet mb-0" style="font-size:.82rem;">
+                        PDF, DOC or DOCX &nbsp;&middot;&nbsp; or drag it here
+                    </p>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-3"
+                            onclick="document.getElementById('resumeInput').click()">
+                        Browse Files
+                    </button>
+                </div>
+            </div>
+
+            <!-- No cover letter callout -->
+            <div class="d-flex gap-2 align-items-center p-3 rounded-3 mb-4"
+                 style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
+                <span style="font-size:.87rem; color:#15803d;">
+                    No cover letter needed — your application is ready to send.
+                </span>
+            </div>
+
+            <!-- Single primary CTA — no cancel button to split attention -->
+            <button type="submit" class="btn btn-primary w-100"
+                    style="padding:15px; font-size:1.05rem; font-weight:600;">
+                <i class="bi bi-send-fill"></i> Send My Application
+            </button>
+
+            <!-- What happens next — reduces post-submit anxiety -->
+            <p class="text-quiet text-center mt-3 mb-0" style="font-size:.82rem;">
+                We'll notify {{ job.company }} straight away.
+                You can track this in <a href="{% url 'my_applications' %}">My Jobs</a>.
+            </p>
+        </form>
+
     </div>
+
+    <!-- Escape hatch — small link, not a button competing with the CTA -->
+    <p class="text-center mt-3 mb-0" style="font-size:.82rem;">
+        <a href="{% url 'job_detail' job.pk %}" class="text-quiet text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Back to the job
+        </a>
+    </p>
 </div>
 {% endblock %}

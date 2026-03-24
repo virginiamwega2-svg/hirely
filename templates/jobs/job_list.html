@@ -1,88 +1,125 @@
 {% extends 'base.html' %}
 
-{% block title %}Browse Jobs - Hirely{% endblock %}
+{% block title %}Flexible Jobs — Hirely{% endblock %}
 
 {% block content %}
 <div class="container">
 
-    <!-- Header -->
-    <div class="text-center py-4 mb-4">
-        <h2 class="fw-bold">Browse Jobs</h2>
-        <p class="text-muted">Find the perfect role for you</p>
+    <!-- Page header -->
+    <div class="py-4">
+        <h2 class="fw-bold mb-1">Flexible Jobs</h2>
+        <p class="text-quiet mb-0">No cover letter. Apply in about a minute.</p>
     </div>
 
-    <!-- Search & Filter -->
-    <form method="get" class="card border-0 shadow-sm p-4 mb-4">
-        <div class="row g-2">
-            <div class="col-md-5">
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Job title or company...">
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
-                    <input type="text" name="location" value="{{ location }}" class="form-control border-start-0" placeholder="Location...">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <select name="job_type" class="form-select">
-                    <option value="">All Types</option>
-                    {% for value, label in job_type_choices %}
-                        <option value="{{ value }}" {% if job_type == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Search</button>
-            </div>
+    <!-- Schedule chips — scrollable on mobile, no wrap ───────────── -->
+    <div class="chip-row mb-3">
+        <a href="{% url 'job_list' %}{% if remote_only %}?remote_only=1{% endif %}"
+           class="flex-chip btn {% if not schedule_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All
+        </a>
+        <a href="?schedule_type=fixed{% if remote_only %}&remote_only=1{% endif %}"
+           class="flex-chip btn {% if schedule_type == 'fixed' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-alarm"></i> Fixed
+        </a>
+        <a href="?schedule_type=flexible{% if remote_only %}&remote_only=1{% endif %}"
+           class="flex-chip btn {% if schedule_type == 'flexible' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-toggles"></i> Flexible
+        </a>
+        <a href="?schedule_type=anytime{% if remote_only %}&remote_only=1{% endif %}"
+           class="flex-chip btn {% if schedule_type == 'anytime' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-infinity"></i> Async
+        </a>
+    </div>
+
+    <!-- Location + remote — compact single row ───────────────────── -->
+    <form method="get" class="d-flex gap-2 align-items-center mb-4 flex-wrap">
+        {% if schedule_type %}<input type="hidden" name="schedule_type" value="{{ schedule_type }}">{% endif %}
+        <div class="input-group" style="max-width:280px;">
+            <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-quiet"></i></span>
+            <input type="text" name="location" value="{{ location }}"
+                   class="form-control border-start-0"
+                   placeholder="City or region...">
         </div>
+        <div class="form-check form-switch mb-0 ms-1">
+            <input class="form-check-input" type="checkbox" name="remote_only" value="1"
+                   id="remoteToggle" {% if remote_only %}checked{% endif %}
+                   onchange="this.form.submit()">
+            <label class="form-check-label fw-semibold small" for="remoteToggle">
+                Remote only
+            </label>
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm">Apply</button>
+        {% if schedule_type or location or remote_only %}
+            <a href="{% url 'job_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+        {% endif %}
     </form>
 
-    <!-- Results count -->
-    <p class="text-muted mb-3">
-        <strong>{{ jobs.count }}</strong> job{{ jobs.count|pluralize }} found
-        {% if query %} for "<strong>{{ query }}</strong>"{% endif %}
+    <!-- Result count — small and quiet ──────────────────────────── -->
+    <p class="text-quiet mb-3" style="font-size:.85rem;">
+        <strong style="color:var(--text);">{{ jobs.count }}</strong> role{{ jobs.count|pluralize }}
+        {% if schedule_type or remote_only or location %}&nbsp;&middot;&nbsp;
+            {% if schedule_type == 'fixed' %}Fixed Schedule{% endif %}
+            {% if schedule_type == 'flexible' %}Flexible Hours{% endif %}
+            {% if schedule_type == 'anytime' %}Async — Any Time{% endif %}
+            {% if remote_only %}Remote only{% endif %}
+            {% if location %}· {{ location }}{% endif %}
+        {% endif %}
     </p>
 
-    <!-- Job Cards -->
+    <!-- Job cards — clean, scannable ────────────────────────────── -->
     {% if jobs %}
-        <div class="row g-3">
+        <div class="d-flex flex-column gap-2 mb-5">
             {% for job in jobs %}
-            <div class="col-12">
-                <div class="card job-card shadow-sm border-0">
-                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="fw-semibold mb-1">{{ job.title }}</h5>
-                            <p class="text-muted mb-2">
-                                <i class="bi bi-building"></i> {{ job.company }} &nbsp;&nbsp;
-                                <i class="bi bi-geo-alt"></i> {{ job.location }}
-                            </p>
-                            <div>
-                                <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
+            <a href="{% url 'job_detail' job.pk %}" class="text-decoration-none">
+                <div class="card job-card p-4">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+
+                        <!-- Left: the essentials -->
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                <span class="fw-semibold" style="color:var(--text); font-size:1rem;">{{ job.title }}</span>
+                                <span class="badge bg-{{ job.flex_colour }}">{{ job.flex_label }}</span>
+                            </div>
+                            <div class="text-quiet mb-2" style="font-size:.85rem;">
+                                {{ job.company }} &middot; {{ job.location }}
+                            </div>
+                            <!-- The 3 signals parents care about most -->
+                            <div class="d-flex flex-wrap gap-1">
+                                <span class="badge" style="background:#eff6ff; color:#2563eb; border-radius:6px;">
+                                    {{ job.get_schedule_type_display }}
+                                </span>
+                                {% if job.is_remote %}
+                                    <span class="badge" style="background:#f0fdf4; color:#16a34a; border-radius:6px;">
+                                        <i class="bi bi-laptop"></i> Remote
+                                    </span>
+                                {% endif %}
+                                {% if job.hours_per_day %}
+                                    <span class="badge bg-light text-dark border">{{ job.hours_per_day }} hrs/day</span>
+                                {% endif %}
                                 {% if job.salary %}
                                     <span class="badge bg-success">{{ job.salary }}</span>
                                 {% endif %}
-                                <small class="text-muted ms-2">
-                                    <i class="bi bi-clock"></i> {{ job.created_at|timesince }} ago
-                                </small>
                             </div>
                         </div>
-                        <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-primary px-4">
-                            View Job <i class="bi bi-arrow-right"></i>
-                        </a>
+
+                        <!-- Right: single action -->
+                        <span class="btn btn-outline-primary btn-sm flex-shrink-0 align-self-center">
+                            See Details
+                        </span>
                     </div>
                 </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
+
     {% else %}
         <div class="text-center py-5">
-            <i class="bi bi-search display-1 text-muted"></i>
-            <p class="text-muted mt-3 fs-5">No jobs found. Try a different search.</p>
-            <a href="{% url 'job_list' %}" class="btn btn-outline-primary">Clear Search</a>
+            <i class="bi bi-search" style="font-size:2.5rem; color:var(--muted);"></i>
+            <h6 class="mt-3 fw-semibold">Nothing here yet</h6>
+            <p class="text-quiet small">Try a different schedule type or clear the location.</p>
+            <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm">Clear All Filters</a>
         </div>
     {% endif %}
+
 </div>
 {% endblock %}

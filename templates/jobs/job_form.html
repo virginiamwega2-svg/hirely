@@ -1,23 +1,112 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ title }} - Hirely{% endblock %}
+{% block title %}{{ action }} a Flexible Role — Hirely{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="mb-4">{{ title }}</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="d-flex gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">Save Job</button>
-                        <a href="{% url 'employer_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
-                    </div>
-                </form>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h2 class="fw-bold mb-1">{{ action }} a Flexible Role</h2>
+                <p class="text-muted mb-0">
+                    Be specific about schedule and hours — parents make quick decisions based on this information.
+                </p>
             </div>
+
+            <!-- Tips banner -->
+            <div class="alert alert-primary border-0 mb-4 d-flex gap-3 align-items-start">
+                <i class="bi bi-lightbulb-fill fs-5 flex-shrink-0 mt-1"></i>
+                <div>
+                    <strong>Tips for attracting parent applicants</strong>
+                    <ul class="mb-0 mt-1 small">
+                        <li>State exact hours per week — parents plan childcare around this</li>
+                        <li>Tick "Remote" if any home working is available — it's the #1 filter parents use</li>
+                        <li>Be transparent with pay — parents budget carefully and won't apply blind</li>
+                        <li>Describe <em>when</em> the work happens, not just <em>what</em> it is</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Role basics -->
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">The Role</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                {{ form.title|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.company|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.location|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.salary|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Flexibility details (the critical section) -->
+                        <h6 class="fw-bold text-uppercase text-muted small mb-1">
+                            <i class="bi bi-lightning-fill text-warning"></i> Flexibility Details
+                        </h6>
+                        <p class="text-muted small mb-3">This is what parents look at first.</p>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                {{ form.job_type|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.hours_per_week|as_crispy_field }}
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch ps-0">
+                                    <div class="d-flex align-items-center gap-3 p-3 rounded border bg-light">
+                                        <div class="form-check form-switch mb-0">
+                                            {{ form.is_remote }}
+                                        </div>
+                                        <div>
+                                            <label class="form-check-label fw-semibold" for="{{ form.is_remote.id_for_label }}">
+                                                <i class="bi bi-laptop"></i> Remote / Work from Home
+                                            </label>
+                                            <div class="text-muted small">Tick this if the parent can work from home — even part of the time.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Description -->
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3">Role Description</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+                            <div class="col-12">
+                                {{ form.requirements|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-lg"></i>
+                                {% if action == 'Post' %}Publish Role{% else %}Save Changes{% endif %}
+                            </button>
+                            <a href="{% url 'employer_dashboard' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

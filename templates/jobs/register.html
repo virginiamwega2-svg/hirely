@@ -1,23 +1,75 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}Register - Hirely{% endblock %}
+{% block title %}Get Started — Hirely{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="card-title text-center mb-4">Create an Account</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary w-100 mt-2">Register</button>
-                </form>
-                <p class="text-center mt-3 mb-0">
-                    Already have an account? <a href="{% url 'login' %}">Login</a>
-                </p>
+<div class="container" style="max-width:440px;">
+    <div class="pt-4 pb-2 text-center">
+        <h2 class="fw-bold mb-1" style="font-size:1.6rem;">Let's get you set up</h2>
+        <p class="text-quiet mb-0">Takes 30 seconds. No commitment.</p>
+    </div>
+
+    <div class="card p-4 p-md-5 mt-3">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger border-0 mb-3" style="border-radius:8px;">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold small" for="{{ form.email.id_for_label }}">
+                    Email Address
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="text-danger mt-1" style="font-size:.82rem;">{{ form.email.errors.0 }}</div>
+                {% endif %}
             </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold small" for="{{ form.password1.id_for_label }}">
+                    Password
+                </label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="text-danger mt-1" style="font-size:.82rem;">{{ form.password1.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold small" for="{{ form.password2.id_for_label }}">
+                    Confirm Password
+                </label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="text-danger mt-1" style="font-size:.82rem;">{{ form.password2.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100"
+                    style="padding:14px; font-size:1rem;">
+                Create My Account
+            </button>
+
+            <!-- What happens next — tells parent exactly what to expect -->
+            <div class="mt-3 p-3 rounded-3 text-center"
+                 style="background:#f0f4ff; border:1px solid #dbe4ff; font-size:.82rem; color:#3b5bdb;">
+                After this, you can apply to any role in one click.
+            </div>
+        </form>
+
+        <!-- Trust signals — removes the hesitation to sign up -->
+        <div class="text-center mt-3">
+            <p class="text-quiet mb-1" style="font-size:.78rem;">
+                <i class="bi bi-shield-check"></i>
+                No spam, ever. Unsubscribe any time.
+            </p>
+            <p class="text-quiet mb-0" style="font-size:.82rem;">
+                Already have an account? <a href="{% url 'login' %}">Log in</a>
+            </p>
         </div>
     </div>
 </div>

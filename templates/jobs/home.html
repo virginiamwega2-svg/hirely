@@ -1,95 +1,139 @@
 {% extends 'base.html' %}
 
-{% block title %}Hirely - Find Your Dream Job{% endblock %}
+{% block title %}Hirely — Flexible Jobs for Busy Parents{% endblock %}
 
 {% block content %}
 
-<!-- Hero Section -->
 <div class="hero text-center mb-5">
-    <div class="container">
-        <h1 class="display-4 fw-bold mb-3">Find Your Dream Job</h1>
-        <p class="lead mb-4 opacity-75">Browse hundreds of jobs from top companies. Your next opportunity is one click away.</p>
-        <div class="d-flex justify-content-center gap-3">
-            <a href="{% url 'job_list' %}" class="btn btn-light btn-lg fw-semibold">
-                <i class="bi bi-search"></i> Browse Jobs
-            </a>
-            {% if not user.is_authenticated %}
-                <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">Get Started Free</a>
-            {% else %}
-                <a href="{% url 'employer_dashboard' %}" class="btn btn-outline-light btn-lg">
-                    <i class="bi bi-plus-lg"></i> Post a Job
-                </a>
-            {% endif %}
+    <div class="container" style="max-width:640px;">
+        <h1 class="fw-bold mb-2" style="font-size:clamp(1.8rem,5vw,2.6rem); line-height:1.2;">
+            Work that fits around<br>school, naps, and life.
+        </h1>
+        <p class="mb-4" style="opacity:.88; font-size:1.05rem;">
+            Every role here is flexible. Pick your schedule and go.
+        </p>
+        <div class="chip-row justify-content-center flex-wrap">
+            <a href="{% url 'job_list' %}?schedule_type=fixed"    class="btn btn-light flex-chip"><i class="bi bi-alarm"></i> Fixed</a>
+            <a href="{% url 'job_list' %}?schedule_type=flexible" class="btn btn-light flex-chip"><i class="bi bi-toggles"></i> Flexible</a>
+            <a href="{% url 'job_list' %}?schedule_type=anytime"  class="btn btn-light flex-chip"><i class="bi bi-infinity"></i> Async</a>
+            <a href="{% url 'job_list' %}?remote_only=1"          class="btn btn-light flex-chip"><i class="bi bi-laptop"></i> Remote</a>
         </div>
     </div>
 </div>
 
 <div class="container">
 
-    <!-- Stats Row -->
-    <div class="row g-3 mb-5 text-center">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm stat-card p-3">
-                <h3 class="text-primary fw-bold">{{ jobs.count }}+</h3>
-                <p class="text-muted mb-0">Jobs Available</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3" style="border-left: 4px solid #0dcaf0;">
-                <h3 class="text-info fw-bold">100%</h3>
-                <p class="text-muted mb-0">Free to Apply</p>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3" style="border-left: 4px solid #198754;">
-                <h3 class="text-success fw-bold">Fast</h3>
-                <p class="text-muted mb-0">Easy Applications</p>
-            </div>
-        </div>
+    <!-- Schedule type grid — 3 clean categories ──────────────────── -->
+    <div class="mb-2">
+        <h5 class="fw-bold mb-0">Browse by schedule</h5>
+        <p class="text-quiet small mb-3">Every role is tagged with when you'd work.</p>
     </div>
 
-    <!-- Latest Jobs -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold">Latest Jobs</h4>
-        <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm">View All</a>
+    <div class="row g-3 mb-5">
+
+        <div class="col-sm-6 col-lg-4">
+            <a href="{% url 'job_list' %}?schedule_type=fixed" class="schedule-card h-100">
+                <div class="schedule-icon" style="background:#eff6ff;">
+                    <i class="bi bi-alarm" style="color:#2563eb;"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold" style="font-size:.95rem;">Fixed Schedule</div>
+                    <div class="text-quiet" style="font-size:.82rem;">Set days and hours — structured and predictable</div>
+                    {% if type_counts.fixed %}
+                        <div class="label-sm mt-1">{{ type_counts.fixed }} role{{ type_counts.fixed|pluralize }}</div>
+                    {% endif %}
+                </div>
+            </a>
+        </div>
+
+        <div class="col-sm-6 col-lg-4">
+            <a href="{% url 'job_list' %}?schedule_type=flexible" class="schedule-card h-100">
+                <div class="schedule-icon" style="background:#f0fdf4;">
+                    <i class="bi bi-toggles" style="color:#16a34a;"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold" style="font-size:.95rem;">Flexible Hours</div>
+                    <div class="text-quiet" style="font-size:.82rem;">Total hours agreed — you choose when</div>
+                    {% if type_counts.flexible %}
+                        <div class="label-sm mt-1">{{ type_counts.flexible }} role{{ type_counts.flexible|pluralize }}</div>
+                    {% endif %}
+                </div>
+            </a>
+        </div>
+
+        <div class="col-sm-6 col-lg-4">
+            <a href="{% url 'job_list' %}?schedule_type=anytime" class="schedule-card h-100">
+                <div class="schedule-icon" style="background:#fdf4ff;">
+                    <i class="bi bi-infinity" style="color:#9333ea;"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold" style="font-size:.95rem;">Async — Any Time</div>
+                    <div class="text-quiet" style="font-size:.82rem;">No fixed hours, no required meetings</div>
+                    {% if type_counts.anytime %}
+                        <div class="label-sm mt-1">{{ type_counts.anytime }} role{{ type_counts.anytime|pluralize }}</div>
+                    {% endif %}
+                </div>
+            </a>
+        </div>
+
     </div>
 
+    <!-- Latest roles ─────────────────────────────────────────────── -->
     {% if jobs %}
-        <div class="row g-3 mb-5">
-            {% for job in jobs %}
-            <div class="col-md-6">
-                <div class="card job-card shadow-sm h-100">
-                    <div class="card-body p-4">
-                        <h5 class="fw-semibold mb-1">{{ job.title }}</h5>
-                        <p class="text-muted mb-2">
-                            <i class="bi bi-building"></i> {{ job.company }} &nbsp;&nbsp;
-                            <i class="bi bi-geo-alt"></i> {{ job.location }}
-                        </p>
-                        <div class="mb-3">
-                            <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
-                            {% if job.salary %}
-                                <span class="badge bg-success">{{ job.salary }}</span>
-                            {% endif %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Latest roles</h5>
+        <a href="{% url 'job_list' %}" class="btn btn-sm btn-outline-primary">See all</a>
+    </div>
+    <div class="row g-3 mb-5">
+        {% for job in jobs %}
+        <div class="col-md-6">
+            <a href="{% url 'job_detail' job.pk %}" class="text-decoration-none">
+                <div class="card job-card h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <div class="fw-semibold" style="color:var(--text); font-size:.97rem;">{{ job.title }}</div>
+                            <div class="text-quiet" style="font-size:.83rem;">
+                                {{ job.company }}{% if job.location %} &middot; {{ job.location }}{% endif %}
+                            </div>
                         </div>
-                        <p class="text-muted small">{{ job.description|truncatewords:20 }}</p>
+                        <span class="badge bg-{{ job.flex_colour }} flex-shrink-0 ms-2">{{ job.flex_label }}</span>
                     </div>
-                    <div class="card-footer bg-white d-flex justify-content-between align-items-center border-0 pt-0">
-                        <small class="text-muted"><i class="bi bi-clock"></i> {{ job.created_at|timesince }} ago</small>
-                        <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-primary btn-sm">View Job</a>
+                    <div class="d-flex flex-wrap gap-1 mt-auto">
+                        <span class="badge" style="background:#f0f4ff; color:#2563eb;">
+                            {{ job.get_schedule_type_display }}
+                        </span>
+                        {% if job.is_remote %}
+                            <span class="badge" style="background:#f0fdf4; color:#16a34a;">Remote</span>
+                        {% endif %}
+                        {% if job.hours_per_day %}
+                            <span class="badge bg-light text-dark border">{{ job.hours_per_day }} hrs/day</span>
+                        {% endif %}
+                        {% if job.salary %}
+                            <span class="badge bg-success">{{ job.salary }}</span>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
-            {% endfor %}
+            </a>
         </div>
+        {% endfor %}
+    </div>
     {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-briefcase display-1 text-muted"></i>
-            <p class="text-muted mt-3 fs-5">No jobs posted yet. Be the first!</p>
-            {% if user.is_authenticated %}
-                <a href="{% url 'post_job' %}" class="btn btn-primary">Post a Job</a>
-            {% endif %}
-        </div>
+    <div class="text-center py-5 mb-5">
+        <i class="bi bi-search" style="font-size:2.5rem; color:var(--muted);"></i>
+        <p class="text-quiet mt-3">No roles posted yet — check back soon.</p>
+    </div>
     {% endif %}
+
+    <!-- Employer CTA ─────────────────────────────────────────────── -->
+    <div class="p-4 p-md-5 mb-4 text-center rounded-3" style="background:#f0f4ff; border:1px solid #dbe4ff;">
+        <h5 class="fw-bold mb-1">Hiring flexible workers?</h5>
+        <p class="text-quiet small mb-3">Post a role and reach skilled parents ready to work on your schedule.</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'post_job' %}" class="btn btn-primary px-4">Post a Flexible Role</a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn btn-primary px-4">Get Started Free</a>
+        {% endif %}
+    </div>
 
 </div>
 {% endblock %}

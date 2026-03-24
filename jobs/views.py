@@ -1,39 +1,50 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
+from django.db.models import Count
 from django.conf import settings
 from .models import Job, Application
 from .forms import RegisterForm, JobForm, ApplicationForm
 
 
 def home(request):
-    jobs = Job.objects.filter(is_active=True)[:6]
-    return render(request, 'jobs/home.html', {'jobs': jobs})
+    active_jobs = Job.objects.filter(is_active=True)
+    featured_jobs = active_jobs.select_related('posted_by')[:6]
+    total_jobs = active_jobs.count()
+    type_counts = {
+        row['schedule_type']: row['count']
+        for row in active_jobs.values('schedule_type').annotate(count=Count('id'))
+    }
+    return render(request, 'jobs/home.html', {
+        'jobs': featured_jobs,
+        'total_jobs': total_jobs,
+        'type_counts': type_counts,
+    })
 
 
 def job_list(request):
-    jobs = Job.objects.filter(is_active=True)
-    query = request.GET.get('q', '')
-    location = request.GET.get('location', '')
-    job_type = request.GET.get('job_type', '')
+    jobs = Job.objects.filter(is_active=True).select_related('posted_by')
+    schedule_type = request.GET.get('schedule_type', '')
+    remote_only   = request.GET.get('remote_only', '')
+    location      = request.GET.get('location', '')
 
-    if query:
-        jobs = jobs.filter(title__icontains=query) | jobs.filter(company__icontains=query)
+    if schedule_type:
+        jobs = jobs.filter(schedule_type=schedule_type)
+    if remote_only:
+        jobs = jobs.filter(is_remote=True)
     if location:
         jobs = jobs.filter(location__icontains=location)
-    if job_type:
-        jobs = jobs.filter(job_type=job_type)
 
-    context = {
+    return render(request, 'jobs/job_list.html', {
         'jobs': jobs,
-        'query': query,
+        'schedule_type': schedule_type,
+        'remote_only': remote_only,
         'location': location,
-        'job_type': job_type,
-        'job_type_choices': Job.JOB_TYPE_CHOICES,
-    }
-    return render(request, 'jobs/job_list.html', context)
+        'schedule_choices': Job.SCHEDULE_CHOICES,
+    })
 
 
 def job_detail(request, pk):
@@ -52,8 +63,8 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, f'Account created! Welcome, {user.username}!')
-            return redirect('home')
+            messages.success(request, 'Welcome to Hirely! Start finding your flexible role.')
+            return redirect('job_list')
     else:
         form = RegisterForm()
     return render(request, 'jobs/register.html', {'form': form})
@@ -63,14 +74,18 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('home')
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
+        email    = request.POST.get('email', '')
+        password = request.POST.get('password', '')
+        try:
+            user_obj = User.objects.get(email=email)
+            user = authenticate(request, username=user_obj.username, password=password)
+        except User.DoesNotExist:
+            user = None
         if user:
             login(request, user)
             return redirect('home')
         else:
-            messages.error(request, 'Invalid username or password.')
+            messages.error(request, 'Invalid email or password.')
     return render(request, 'jobs/login.html')
 
 
@@ -83,12 +98,10 @@ def logout_view(request):
 def apply(request, pk):
     job = get_object_or_404(Job, pk=pk, is_active=True)
 
-    # Prevent applying to own job
     if job.posted_by == request.user:
         messages.error(request, 'You cannot apply to your own job posting.')
         return redirect('job_detail', pk=pk)
 
-    # Prevent duplicate applications
     if Application.objects.filter(job=job, applicant=request.user).exists():
         messages.warning(request, 'You have already applied for this job.')
         return redirect('job_detail', pk=pk)
@@ -101,13 +114,13 @@ def apply(request, pk):
             application.applicant = request.user
             application.save()
 
-            # Notify the employer by email
             send_mail(
                 subject=f'New application for "{job.title}"',
                 message=(
                     f'Hi {job.posted_by.username},\n\n'
-                    f'{request.user.username} has applied for your job "{job.title}" at {job.company}.\n\n'
-                    f'Log in to view their application:\n'
+                    f'{request.user.email} has applied for your flexible role '
+                    f'"{job.title}" at {job.company}.\n\n'
+                    f'View their application:\n'
                     f'http://127.0.0.1:8000/dashboard/applications/{job.pk}/\n\n'
                     f'— Hirely Team'
                 ),
@@ -116,7 +129,7 @@ def apply(request, pk):
                 fail_silently=True,
             )
 
-            messages.success(request, f'Application submitted for {job.title}!')
+            messages.success(request, f'Applied to {job.title}! The employer has been notified.')
             return redirect('my_applications')
     else:
         form = ApplicationForm()
@@ -125,15 +138,23 @@ def apply(request, pk):
 
 @login_required
 def my_applications(request):
-    applications = Application.objects.filter(applicant=request.user)
+    applications = (
+        Application.objects
+        .filter(applicant=request.user)
+        .select_related('job', 'job__posted_by')
+    )
     return render(request, 'jobs/my_applications.html', {'applications': applications})
 
 
-# --- Employer Views ---
+# ── Employer views ────────────────────────────────────────────────────
 
 @login_required
 def employer_dashboard(request):
-    jobs = Job.objects.filter(posted_by=request.user)
+    jobs = (
+        Job.objects
+        .filter(posted_by=request.user)
+        .annotate(application_count=Count('applications'))
+    )
     return render(request, 'jobs/employer_dashboard.html', {'jobs': jobs})
 
 
@@ -145,11 +166,11 @@ def post_job(request):
             job = form.save(commit=False)
             job.posted_by = request.user
             job.save()
-            messages.success(request, 'Job posted successfully!')
+            messages.success(request, 'Your flexible role is live!')
             return redirect('employer_dashboard')
     else:
         form = JobForm()
-    return render(request, 'jobs/job_form.html', {'form': form, 'title': 'Post a Job'})
+    return render(request, 'jobs/job_form.html', {'form': form, 'action': 'Post'})
 
 
 @login_required
@@ -159,11 +180,11 @@ def edit_job(request, pk):
         form = JobForm(request.POST, instance=job)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Job updated successfully!')
+            messages.success(request, 'Role updated.')
             return redirect('employer_dashboard')
     else:
         form = JobForm(instance=job)
-    return render(request, 'jobs/job_form.html', {'form': form, 'title': 'Edit Job'})
+    return render(request, 'jobs/job_form.html', {'form': form, 'action': 'Edit'})
 
 
 @login_required
@@ -171,7 +192,7 @@ def delete_job(request, pk):
     job = get_object_or_404(Job, pk=pk, posted_by=request.user)
     if request.method == 'POST':
         job.delete()
-        messages.success(request, 'Job deleted.')
+        messages.success(request, 'Role removed.')
         return redirect('employer_dashboard')
     return render(request, 'jobs/delete_job.html', {'job': job})
 
@@ -179,5 +200,5 @@ def delete_job(request, pk):
 @login_required
 def job_applications(request, pk):
     job = get_object_or_404(Job, pk=pk, posted_by=request.user)
-    applications = job.applications.all()
+    applications = job.applications.select_related('applicant')
     return render(request, 'jobs/job_applications.html', {'job': job, 'applications': applications})
