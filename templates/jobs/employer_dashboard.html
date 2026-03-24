@@ -25,12 +25,18 @@
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                     <h5 class="fw-semibold mb-0">{{ job.title }}</h5>
-                                    {% if job.is_active %}
-                                        <span class="badge bg-success">Live</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    {% endif %}
+                                    <span class="badge" id="badge-{{ job.pk }}"
+                                          style="background:{% if job.is_active %}#dcfce7; color:#15803d{% else %}#f3f4f6; color:#6b7280{% endif %};">
+                                        {% if job.is_active %}Live{% else %}Inactive{% endif %}
+                                    </span>
                                     <span class="badge bg-{{ job.flex_colour }}">{{ job.flex_label }}</span>
+                                    <!-- Inline live/inactive toggle -->
+                                    <div class="form-check form-switch mb-0 ms-1" title="Toggle live/inactive">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                               {% if job.is_active %}checked{% endif %}
+                                               onchange="toggleJob({{ job.pk }}, this)"
+                                               style="cursor:pointer; width:2.2em; height:1.2em;">
+                                    </div>
                                 </div>
                                 <p class="text-muted small mb-2">
                                     <i class="bi bi-building"></i> {{ job.company }}
@@ -97,4 +103,30 @@
     {% endif %}
 
 </div>
+
+<script>
+function toggleJob(pk, checkbox) {
+    fetch(`/dashboard/toggle/${pk}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const badge = document.getElementById('badge-' + pk);
+        if (data.is_active) {
+            badge.textContent = 'Live';
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+        } else {
+            badge.textContent = 'Inactive';
+            badge.style.background = '#f3f4f6';
+            badge.style.color = '#6b7280';
+        }
+    })
+    .catch(() => { checkbox.checked = !checkbox.checked; });
+}
+</script>
 {% endblock %}

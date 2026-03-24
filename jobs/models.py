@@ -107,6 +107,11 @@ class Job(models.Model):
     def flex_colour(self):
         return {1: 'secondary', 2: 'primary', 3: 'success'}.get(self.flex_score, 'secondary')
 
+    @property
+    def is_new(self):
+        from django.utils import timezone
+        return (timezone.now() - self.created_at).total_seconds() < 172800  # 48 hours
+
 
 class Application(models.Model):
     """

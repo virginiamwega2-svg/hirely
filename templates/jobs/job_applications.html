@@ -20,7 +20,11 @@
                 <div class="card shadow-sm border-0">
                     <div class="card-body p-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
                         <div>
-                            <h5 class="fw-semibold mb-1">{{ app.applicant.email }}</h5>
+                            <h5 class="fw-semibold mb-1">
+                                <a href="mailto:{{ app.applicant.email }}" class="text-decoration-none" style="color:var(--text);">
+                                    {{ app.applicant.email }}
+                                </a>
+                            </h5>
                             <small class="text-muted d-block mb-2">
                                 <i class="bi bi-clock"></i> Applied {{ app.applied_at|timesince }} ago
                             </small>
@@ -32,9 +36,17 @@
                                 <span class="text-muted small">No resume uploaded</span>
                             {% endif %}
                         </div>
-                        <span class="badge {% if app.status == 'pending' %}bg-warning text-dark{% elif app.status == 'reviewed' %}bg-info{% elif app.status == 'accepted' %}bg-success{% else %}bg-danger{% endif %}">
-                            {{ app.get_status_display }}
-                        </span>
+                        <form method="post" action="{% url 'update_application_status' app.pk %}" class="d-flex align-items-center gap-2">
+                            {% csrf_token %}
+                            <select name="status" class="form-select form-select-sm" style="width:auto;"
+                                    onchange="this.form.submit()">
+                                {% for value, label in app.STATUS_CHOICES %}
+                                    <option value="{{ value }}" {% if app.status == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
                     </div>
                 </div>
             </div>

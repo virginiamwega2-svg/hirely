@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config, Csv
+from django.contrib.messages import constants as message_constants
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -128,3 +129,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Email (prints to terminal in development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@hirely.com'
+
+# Map Django's 'error' tag to Bootstrap's 'danger' class
+MESSAGE_TAGS = {message_constants.ERROR: 'danger'}
+
+# Use our custom login page
+LOGIN_URL = '/login/'

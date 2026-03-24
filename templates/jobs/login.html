@@ -14,27 +14,48 @@
             {% csrf_token %}
 
             <div class="mb-3">
-                <label class="form-label fw-semibold small" for="emailInput">Email Address</label>
+                <label class="form-label fw-semibold small" for="emailInput">Email address</label>
                 <input type="email" name="email" id="emailInput"
-                       class="form-control" placeholder="you@example.com"
+                       class="form-control {% if has_error %}is-invalid{% endif %}"
+                       placeholder="you@example.com"
                        required autofocus>
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-semibold small" for="passwordInput">Password</label>
-                <input type="password" name="password" id="passwordInput"
-                       class="form-control" required>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label fw-semibold small mb-0" for="passwordInput">Password</label>
+                    <a href="{% url 'password_reset' %}" class="text-quiet" style="font-size:.8rem;">Forgot password?</a>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" id="passwordInput"
+                           class="form-control border-end-0 {% if has_error %}is-invalid{% endif %}" required>
+                    <button type="button" class="btn btn-outline-secondary border-start-0"
+                            style="min-height:44px; background:#fff;"
+                            onclick="togglePassword()" id="toggleBtn"
+                            aria-label="Show password">
+                        <i class="bi bi-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100"
-                    style="padding:14px; font-size:1rem;">
+            <button type="submit" class="btn btn-primary w-100" style="padding:14px; font-size:1rem;">
                 Log In
             </button>
         </form>
 
-        <p class="text-center text-quiet mt-3 mb-0" style="font-size:.82rem;">
+        <p class="text-center text-quiet mt-4 mb-0" style="font-size:.85rem;">
             No account yet? <a href="{% url 'register' %}">Get started free</a>
         </p>
     </div>
 </div>
+
+<script>
+function togglePassword() {
+    const input = document.getElementById('passwordInput');
+    const icon  = document.getElementById('toggleIcon');
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    icon.className = showing ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+</script>
 {% endblock %}

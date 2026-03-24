@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hirely{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563eb'/><text x='16' y='23' text-anchor='middle' font-family='system-ui,sans-serif' font-size='18' font-weight='700' fill='white'>H</text></svg>">
+    <meta name="description" content="{% block meta_description %}Flexible jobs for busy parents — find roles that fit around school, naps, and life.{% endblock %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -185,6 +187,22 @@
             font-weight: 600;
         }
 
+        /* ── Company avatar — letter-based placeholder ─────────────── */
+        .co-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            background: #eef2ff;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
         /* ── Footer — light, not heavy dark slab ──────────────────── */
         footer {
             background: #fff;
@@ -210,23 +228,27 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'job_list' %}">Find a Role</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'job_list' %}active fw-semibold{% endif %}"
+                           href="{% url 'job_list' %}">Find a Role</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto align-items-center gap-1">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'my_applications' %}">My Jobs</a>
+                            <a class="nav-link {% if request.resolver_match.url_name == 'my_applications' %}active fw-semibold{% endif %}"
+                               href="{% url 'my_applications' %}">My Applications</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'employer_dashboard' %}">Dashboard</a>
+                            <a class="nav-link {% if request.resolver_match.url_name in 'employer_dashboard,post_job,edit_job,job_applications' %}active fw-semibold{% endif %}"
+                               href="{% url 'employer_dashboard' %}">Post Jobs</a>
                         </li>
                         <li class="nav-item ms-2">
                             <a class="btn btn-sm btn-outline-secondary" href="{% url 'logout' %}">Sign Out</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Log In</a>
+                            <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active fw-semibold{% endif %}"
+                               href="{% url 'login' %}">Log In</a>
                         </li>
                         <li class="nav-item ms-2">
                             <a class="btn btn-primary btn-sm px-4" href="{% url 'register' %}">Get Started</a>
@@ -237,14 +259,29 @@
         </div>
     </nav>
 
-    <!-- Flash messages -->
-    <div class="container mt-3">
+    <!-- Toast notifications — fixed top-right, auto-dismiss -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1055;">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm" role="alert"
-                 style="border-radius: var(--radius);">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="toast bg-white shadow align-items-center" role="alert"
+             data-bs-autohide="true" data-bs-delay="4000"
+             style="border-radius:var(--radius); border:1px solid var(--border); min-width:280px;">
+            <div class="d-flex p-1">
+                <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;">
+                    {% if message.tags == 'success' %}
+                        <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
+                    {% elif message.tags == 'danger' %}
+                        <i class="bi bi-exclamation-circle-fill text-danger flex-shrink-0"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="bi bi-exclamation-triangle-fill text-warning flex-shrink-0"></i>
+                    {% else %}
+                        <i class="bi bi-info-circle-fill text-primary flex-shrink-0"></i>
+                    {% endif %}
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close me-2 m-auto flex-shrink-0"
+                        data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
+        </div>
         {% endfor %}
     </div>
 
@@ -260,12 +297,34 @@
                 <span class="fw-bold" style="color:var(--primary)">Hirely</span>
             </a>
             <p class="small mb-0" style="color:var(--muted)">
-                Flexible jobs for busy parents &nbsp;&middot;&nbsp; &copy; 2025
+                Flexible jobs for busy parents &nbsp;&middot;&nbsp; &copy; {% now "Y" %}
             </p>
         </div>
     </footer>
 
+    <!-- Scroll-to-top button -->
+    <button id="scrollTop" title="Back to top"
+            onclick="window.scrollTo({top:0,behavior:'smooth'})"
+            style="position:fixed;bottom:24px;right:24px;width:44px;height:44px;
+                   border-radius:50%;background:var(--primary);color:#fff;border:none;
+                   box-shadow:var(--shadow-md);opacity:0;pointer-events:none;
+                   transition:opacity .2s;z-index:998;cursor:pointer;
+                   display:flex;align-items:center;justify-content:center;">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Auto-show all toasts -->
+    <script>
+    document.querySelectorAll('.toast').forEach(el => new bootstrap.Toast(el).show());
+    const _scrollBtn = document.getElementById('scrollTop');
+    window.addEventListener('scroll', () => {
+        const show = window.scrollY > 300;
+        _scrollBtn.style.opacity = show ? '1' : '0';
+        _scrollBtn.style.pointerEvents = show ? 'auto' : 'none';
+    });
+    </script>
 
     <!-- Upload zone interaction -->
     <script>

@@ -11,8 +11,8 @@
         <p class="text-quiet mb-0">No cover letter. Apply in about a minute.</p>
     </div>
 
-    <!-- Schedule chips — scrollable on mobile, no wrap ───────────── -->
-    <div class="chip-row mb-3">
+    <!-- Schedule chips — sticky below navbar, scrollable on mobile ── -->
+    <div class="chip-row mb-3" style="position:sticky; top:65px; z-index:100; background:var(--bg); padding-top:8px; padding-bottom:8px; margin-top:-8px;">
         <a href="{% url 'job_list' %}{% if remote_only %}?remote_only=1{% endif %}"
            class="flex-chip btn {% if not schedule_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
             All
@@ -56,7 +56,7 @@
 
     <!-- Result count — small and quiet ──────────────────────────── -->
     <p class="text-quiet mb-3" style="font-size:.85rem;">
-        <strong style="color:var(--text);">{{ jobs.count }}</strong> role{{ jobs.count|pluralize }}
+        <strong style="color:var(--text);">{{ total_count }}</strong> role{{ total_count|pluralize }}
         {% if schedule_type or remote_only or location %}&nbsp;&middot;&nbsp;
             {% if schedule_type == 'fixed' %}Fixed Schedule{% endif %}
             {% if schedule_type == 'flexible' %}Flexible Hours{% endif %}
@@ -67,22 +67,29 @@
     </p>
 
     <!-- Job cards — clean, scannable ────────────────────────────── -->
-    {% if jobs %}
-        <div class="d-flex flex-column gap-2 mb-5">
-            {% for job in jobs %}
+    {% if page_obj %}
+        <div class="d-flex flex-column gap-2 mb-4">
+            {% for job in page_obj %}
             <a href="{% url 'job_detail' job.pk %}" class="text-decoration-none">
                 <div class="card job-card p-4">
                     <div class="d-flex justify-content-between align-items-start gap-3">
 
                         <!-- Left: the essentials -->
-                        <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex gap-3 flex-grow-1 min-w-0">
+                            <div class="co-avatar">{{ job.company|first }}</div>
+                            <div class="flex-grow-1 min-w-0">
                             <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                 <span class="fw-semibold" style="color:var(--text); font-size:1rem;">{{ job.title }}</span>
                                 <span class="badge bg-{{ job.flex_colour }}">{{ job.flex_label }}</span>
+                                {% if job.is_new %}<span class="badge bg-success">New</span>{% endif %}
                             </div>
                             <div class="text-quiet mb-2" style="font-size:.85rem;">
-                                {{ job.company }} &middot; {{ job.location }}
+                                {{ job.company }}{% if job.location %} &middot; {{ job.location }}{% endif %}
                             </div>
+                            <p class="text-quiet mb-2" style="font-size:.82rem; line-height:1.4;
+                               display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                {{ job.description }}
+                            </p>
                             <!-- The 3 signals parents care about most -->
                             <div class="d-flex flex-wrap gap-1">
                                 <span class="badge" style="background:#eff6ff; color:#2563eb; border-radius:6px;">
@@ -100,6 +107,7 @@
                                     <span class="badge bg-success">{{ job.salary }}</span>
                                 {% endif %}
                             </div>
+                            </div>
                         </div>
 
                         <!-- Right: single action -->
@@ -111,6 +119,25 @@
             </a>
             {% endfor %}
         </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav class="d-flex justify-content-center align-items-center gap-2 mb-5">
+            {% if page_obj.has_previous %}
+                <a href="?{% if schedule_type %}schedule_type={{ schedule_type }}&{% endif %}{% if remote_only %}remote_only=1&{% endif %}{% if location %}location={{ location }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Prev
+                </a>
+            {% endif %}
+            <span class="text-quiet small">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?{% if schedule_type %}schedule_type={{ schedule_type }}&{% endif %}{% if remote_only %}remote_only=1&{% endif %}{% if location %}location={{ location }}&{% endif %}page={{ page_obj.next_page_number }}"
+                   class="btn btn-outline-secondary btn-sm">
+                    Next <i class="bi bi-arrow-right"></i>
+                </a>
+            {% endif %}
+        </nav>
+        {% endif %}
 
     {% else %}
         <div class="text-center py-5">

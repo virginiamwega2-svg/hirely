@@ -9,10 +9,14 @@
         <h1 class="fw-bold mb-2" style="font-size:clamp(1.8rem,5vw,2.6rem); line-height:1.2;">
             Work that fits around<br>school, naps, and life.
         </h1>
-        <p class="mb-4" style="opacity:.88; font-size:1.05rem;">
+        <p class="mb-3" style="opacity:.88; font-size:1.05rem;">
             Every role here is flexible. Pick your schedule and go.
         </p>
-        <div class="chip-row justify-content-center flex-wrap">
+        <p class="mb-4" style="opacity:.75; font-size:.95rem;">
+            <strong style="opacity:1; font-size:1.1rem;">{{ total_jobs }}</strong>
+            flexible role{{ total_jobs|pluralize }} available right now
+        </p>
+        <div class="chip-row justify-content-center">
             <a href="{% url 'job_list' %}?schedule_type=fixed"    class="btn btn-light flex-chip"><i class="bi bi-alarm"></i> Fixed</a>
             <a href="{% url 'job_list' %}?schedule_type=flexible" class="btn btn-light flex-chip"><i class="bi bi-toggles"></i> Flexible</a>
             <a href="{% url 'job_list' %}?schedule_type=anytime"  class="btn btn-light flex-chip"><i class="bi bi-infinity"></i> Async</a>
@@ -89,15 +93,24 @@
         <div class="col-md-6">
             <a href="{% url 'job_detail' job.pk %}" class="text-decoration-none">
                 <div class="card job-card h-100 p-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <div class="fw-semibold" style="color:var(--text); font-size:.97rem;">{{ job.title }}</div>
+                    <div class="d-flex align-items-start gap-3 mb-2">
+                        <div class="co-avatar">{{ job.company|first }}</div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex align-items-center gap-1 flex-wrap">
+                                <span class="fw-semibold" style="color:var(--text); font-size:.97rem;">{{ job.title }}</span>
+                                {% if job.is_new %}<span class="badge bg-success" style="font-size:.7rem;">New</span>{% endif %}
+                            </div>
                             <div class="text-quiet" style="font-size:.83rem;">
                                 {{ job.company }}{% if job.location %} &middot; {{ job.location }}{% endif %}
                             </div>
                         </div>
-                        <span class="badge bg-{{ job.flex_colour }} flex-shrink-0 ms-2">{{ job.flex_label }}</span>
+                        <span class="badge bg-{{ job.flex_colour }} flex-shrink-0">{{ job.flex_label }}</span>
                     </div>
+                    </div>
+                    <p class="text-quiet mb-2" style="font-size:.8rem; line-height:1.4;
+                       display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        {{ job.description }}
+                    </p>
                     <div class="d-flex flex-wrap gap-1 mt-auto">
                         <span class="badge" style="background:#f0f4ff; color:#2563eb;">
                             {{ job.get_schedule_type_display }}

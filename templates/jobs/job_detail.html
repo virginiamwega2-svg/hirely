@@ -5,11 +5,15 @@
 {% block content %}
 <div class="container" style="max-width:900px;">
 
-    <!-- Back link — small and quiet, above everything else -->
-    <div class="pt-3 pb-1">
+    <!-- Back link + copy link -->
+    <div class="pt-3 pb-1 d-flex justify-content-between align-items-center">
         <a href="{% url 'job_list' %}" class="text-quiet text-decoration-none small">
             <i class="bi bi-arrow-left"></i> Back to roles
         </a>
+        <button id="copyLinkBtn" onclick="copyLink()" class="btn btn-sm btn-outline-secondary"
+                style="font-size:.8rem;">
+            <i class="bi bi-link-45deg"></i> Copy link
+        </button>
     </div>
 
     <div class="row g-4 mt-0">
@@ -61,6 +65,9 @@
 
                 <p class="text-quiet mt-4 mb-0" style="font-size:.8rem;">
                     Posted {{ job.created_at|timesince }} ago
+                    {% if job.updated_at != job.created_at %}
+                        &nbsp;&middot;&nbsp; Updated {{ job.updated_at|timesince }} ago
+                    {% endif %}
                 </p>
             </div>
         </div>
@@ -157,4 +164,14 @@
 
     </div>
 </div>
+
+<script>
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        const btn = document.getElementById('copyLinkBtn');
+        btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        setTimeout(() => { btn.innerHTML = '<i class="bi bi-link-45deg"></i> Copy link'; }, 2000);
+    });
+}
+</script>
 {% endblock %}
