@@ -53,16 +53,6 @@
         .nav-link:hover { color: var(--primary) !important; }
         .navbar-toggler { border: 1px solid var(--border); }
 
-        /* ── Hero ─────────────────────────────────────────────────── */
-        .hero {
-            background: linear-gradient(135deg, #3b6ff0 0%, #30b8df 100%);
-            color: white;
-            padding: 52px 0;           /* tighter on mobile */
-        }
-        @media (min-width: 768px) {
-            .hero { padding: 80px 0; }
-        }
-
         /* ── Cards — no lift animation, just a shadow change ──────── */
         .card {
             border: 1px solid var(--border);
@@ -239,7 +229,7 @@
                                href="{% url 'my_applications' %}">My Applications</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name in 'employer_dashboard,post_job,edit_job,job_applications' %}active fw-semibold{% endif %}"
+                            <a class="nav-link {% if request.resolver_match.url_name == 'employer_dashboard' or request.resolver_match.url_name == 'post_job' or request.resolver_match.url_name == 'edit_job' or request.resolver_match.url_name == 'job_applications' or request.resolver_match.url_name == 'delete_job' %}active fw-semibold{% endif %}"
                                href="{% url 'employer_dashboard' %}">Post Jobs</a>
                         </li>
                         <li class="nav-item ms-2">
@@ -289,15 +279,50 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer: light, minimal -->
-    <footer class="py-4 mt-5">
-        <div class="container text-center">
-            <a class="navbar-brand text-quiet mb-1 d-inline-block" href="{% url 'home' %}">
-                <i class="bi bi-heart-pulse-fill text-primary"></i>
-                <span class="fw-bold" style="color:var(--primary)">Hirely</span>
-            </a>
-            <p class="small mb-0" style="color:var(--muted)">
-                Flexible jobs for busy parents &nbsp;&middot;&nbsp; &copy; {% now "Y" %}
+    <!-- Footer -->
+    <footer class="py-5 mt-5">
+        <div class="container">
+            <div class="row align-items-start g-4">
+                <!-- Brand + mission -->
+                <div class="col-md-5">
+                    <a class="navbar-brand d-inline-block mb-2" href="{% url 'home' %}">
+                        <i class="bi bi-heart-pulse-fill text-primary"></i>
+                        <span class="fw-bold" style="color:var(--primary)">Hirely</span>
+                    </a>
+                    <p class="small mb-2" style="color:var(--muted)">
+                        The job board built around school runs, nap times, and real life.
+                        Every role is flexible by design.
+                    </p>
+                    <p class="small mb-0 fw-semibold" style="color:var(--text);">
+                        <i class="bi bi-patch-check-fill text-primary"></i>
+                        Trusted by parents and employers across the UK
+                    </p>
+                </div>
+                <!-- Quick links -->
+                <div class="col-6 col-md-3 offset-md-1">
+                    <div class="label-sm mb-2">For Parents</div>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-1"><a href="{% url 'job_list' %}">Browse roles</a></li>
+                        <li class="mb-1"><a href="{% url 'job_list' %}?schedule_type=anytime">Async jobs</a></li>
+                        <li class="mb-1"><a href="{% url 'job_list' %}?remote_only=1">Remote only</a></li>
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'my_applications' %}">My applications</a></li>
+                        {% else %}
+                        <li><a href="{% url 'register' %}">Create account</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="label-sm mb-2">For Employers</div>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-1"><a href="{% url 'post_job' %}">Post a role</a></li>
+                        <li><a href="{% url 'employer_dashboard' %}">Dashboard</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr style="border-color:var(--border); margin-top:2rem; margin-bottom:1rem;">
+            <p class="small mb-0 text-center" style="color:var(--muted)">
+                &copy; {% now "Y" %} Hirely &nbsp;&middot;&nbsp; Flexible jobs for busy parents
             </p>
         </div>
     </footer>

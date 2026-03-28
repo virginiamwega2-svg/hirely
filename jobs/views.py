@@ -5,8 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
+from django.urls import reverse
 from django.conf import settings
 from .models import Job, Application
 from .forms import RegisterForm, JobForm, ApplicationForm
@@ -32,6 +33,8 @@ def job_list(request):
     schedule_type = request.GET.get('schedule_type', '')
     remote_only   = request.GET.get('remote_only', '')
     location      = request.GET.get('location', '')
+    search        = request.GET.get('search', '')
+    sort          = request.GET.get('sort', '')
 
     if schedule_type:
         jobs = jobs.filter(schedule_type=schedule_type)
@@ -39,6 +42,29 @@ def job_list(request):
         jobs = jobs.filter(is_remote=True)
     if location:
         jobs = jobs.filter(location__icontains=location)
+    if search:
+        jobs = jobs.filter(Q(title__icontains=search) | Q(company__icontains=search))
+
+    sort_map = {
+        'flex': ['-flex_score'],   # computed property — can't use in DB sort
+        'oldest': ['created_at'],
+    }
+    if sort == 'flex':
+        # flex_score is a Python property, so sort in Python after slicing would miss records;
+        # approximate with schedule_type ordering instead (anytime > flexible > fixed)
+        from django.db.models import Case, When, IntegerField
+        jobs = jobs.annotate(
+            _flex=Case(
+                When(schedule_type='anytime', then=3),
+                When(schedule_type='flexible', then=2),
+                When(schedule_type='fixed', then=1),
+                output_field=IntegerField(),
+            )
+        ).order_by('-_flex', '-created_at')
+    elif sort == 'oldest':
+        jobs = jobs.order_by('created_at')
+    else:
+        jobs = jobs.order_by('-created_at')
 
     total_count = jobs.count()
     paginator = Paginator(jobs, 10)
@@ -50,6 +76,8 @@ def job_list(request):
         'schedule_type': schedule_type,
         'remote_only': remote_only,
         'location': location,
+        'search': search,
+        'sort': sort,
         'schedule_choices': Job.SCHEDULE_CHOICES,
     })
 
@@ -90,10 +118,11 @@ def login_view(request):
             user = None
         if user:
             login(request, user)
-            return redirect('home')
+            next_url = request.POST.get('next') or request.GET.get('next') or reverse('home')
+            return redirect(next_url)
         messages.error(request, 'Invalid email or password.')
-        return render(request, 'jobs/login.html', {'has_error': True})
-    return render(request, 'jobs/login.html')
+        return render(request, 'jobs/login.html', {'has_error': True, 'next': request.POST.get('next', '')})
+    return render(request, 'jobs/login.html', {'next': request.GET.get('next', '')})
 
 
 def logout_view(request):
@@ -121,6 +150,11 @@ def apply(request, pk):
             application.applicant = request.user
             application.save()
 
+            employer_url = request.build_absolute_uri(
+                reverse('job_applications', args=[job.pk])
+            )
+            applicant_url = request.build_absolute_uri(reverse('my_applications'))
+
             send_mail(
                 subject=f'New application for "{job.title}"',
                 message=(
@@ -128,7 +162,7 @@ def apply(request, pk):
                     f'{request.user.email} has applied for your flexible role '
                     f'"{job.title}" at {job.company}.\n\n'
                     f'View their application:\n'
-                    f'http://127.0.0.1:8000/dashboard/applications/{job.pk}/\n\n'
+                    f'{employer_url}\n\n'
                     f'— Hirely Team'
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -143,7 +177,7 @@ def apply(request, pk):
                     f'Your application for "{job.title}" at {job.company} has been received.\n\n'
                     f"You'll hear back if the employer is interested. Good luck!\n\n"
                     f'View all your applications:\n'
-                    f'http://127.0.0.1:8000/my-applications/\n\n'
+                    f'{applicant_url}\n\n'
                     f'— Hirely Team'
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -222,8 +256,10 @@ def delete_job(request, pk):
 @login_required
 def job_applications(request, pk):
     job = get_object_or_404(Job, pk=pk, posted_by=request.user)
-    applications = job.applications.select_related('applicant')
-    return render(request, 'jobs/job_applications.html', {'job': job, 'applications': applications})
+    applications = job.applications.select_related('applicant').order_by('-applied_at')
+    paginator = Paginator(applications, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'jobs/job_applications.html', {'job': job, 'page_obj': page_obj})
 
 
 @login_required
@@ -245,4 +281,8 @@ def update_application_status(request, pk):
         if status in dict(Application.STATUS_CHOICES):
             app.status = status
             app.save()
-    return redirect('job_applications', pk=app.job.pk)
+    page = request.POST.get('page', '')
+    url = reverse('job_applications', args=[app.job.pk])
+    if page:
+        url += f'?page={page}'
+    return redirect(url)

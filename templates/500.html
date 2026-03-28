@@ -4,11 +4,18 @@
 
 {% block content %}
 <div class="container text-center" style="max-width:480px; padding-top:80px; padding-bottom:80px;">
-    <div style="font-size:3rem; line-height:1;">⚠️</div>
-    <h1 class="fw-bold mt-3 mb-2" style="font-size:1.6rem;">Something went wrong</h1>
-    <p class="text-quiet mb-4">
-        Our server ran into a problem. Try again in a moment.
+    <div style="font-size:3rem; line-height:1;">😬</div>
+    <h1 class="fw-bold mt-3 mb-2" style="font-size:1.6rem;">That's on us, not you</h1>
+    <p class="text-quiet mb-1">
+        Something broke on our end. We know your time is limited —
+        sorry for the interruption.
     </p>
-    <a href="/" class="btn btn-primary px-4">Back to Home</a>
+    <p class="text-quiet mb-4" style="font-size:.88rem;">
+        Try refreshing, or head back to the roles while we sort this out.
+    </p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a href="/jobs/" class="btn btn-primary px-4">Browse open roles</a>
+        <a href="/" class="btn btn-outline-secondary px-4">Home</a>
+    </div>
 </div>
 {% endblock %}

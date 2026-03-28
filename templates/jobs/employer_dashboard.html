@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
             <h2 class="fw-bold mb-1">My Flexible Roles</h2>
-            <p class="text-muted mb-0">Parents are notified by email the moment they apply.</p>
+            <p class="text-muted mb-0">Respond quickly — parents are juggling a lot and appreciate a fast reply.</p>
         </div>
         <a href="{% url 'post_job' %}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Post a Flexible Role
@@ -82,22 +82,29 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-briefcase display-1 text-muted"></i>
-            <h5 class="mt-3 fw-semibold">No roles posted yet</h5>
-            <p class="text-muted">Post your first flexible role and reach thousands of skilled parents.</p>
-            <a href="{% url 'post_job' %}" class="btn btn-primary btn-lg">Post a Flexible Role</a>
+        <div class="text-center py-5" style="max-width:420px; margin:0 auto;">
+            <i class="bi bi-stars display-1 text-muted"></i>
+            <h5 class="mt-3 fw-semibold">Your first role is one step away</h5>
+            <p class="text-muted mb-1">
+                Takes about 5 minutes to post. Be specific about hours and schedule —
+                that's what parents read first.
+            </p>
+            <p class="text-muted small mb-4">
+                Roles with clear schedules and remote options fill fastest.
+            </p>
+            <a href="{% url 'post_job' %}" class="btn btn-primary btn-lg px-5">Post a Role</a>
         </div>
     {% endif %}
 
     <!-- Tips -->
     {% if jobs %}
     <div class="alert alert-light border mt-4 d-flex gap-3 align-items-start">
-        <i class="bi bi-info-circle-fill text-primary fs-5 flex-shrink-0 mt-1"></i>
-        <div class="small text-muted">
-            <strong class="text-dark">Get more applicants:</strong>
-            Roles tagged <em>Remote</em> receive significantly more applications.
-            If any home working is possible, tick it when posting.
+        <i class="bi bi-lightbulb-fill text-primary fs-5 flex-shrink-0 mt-1"></i>
+        <div class="small">
+            <strong style="color:var(--text);">A tip from the parents using Hirely:</strong>
+            <span class="text-muted"> The first thing they check is <em>when</em> the work happens —
+            not the job title. A clear schedule and a salary range will get you more
+            applications than a polished description without either.</span>
         </div>
     </div>
     {% endif %}

@@ -29,7 +29,7 @@
                     </h1>
                     <p class="text-quiet mb-2">
                         <strong style="color:var(--text);">{{ job.company }}</strong>
-                        &nbsp;&middot;&nbsp; {{ job.location }}
+                        {% if job.location %}&nbsp;&middot;&nbsp; {{ job.location }}{% endif %}
                     </p>
                     <div class="d-flex flex-wrap gap-1">
                         <span class="badge bg-{{ job.flex_colour }}">{{ job.flex_label }}</span>
@@ -58,10 +58,12 @@
                     {{ job.description|linebreaks }}
                 </div>
 
+                {% if job.requirements %}
                 <div style="color:var(--text); line-height:1.75;">
                     <h6 class="label-sm mb-2">What You'll Need</h6>
                     {{ job.requirements|linebreaks }}
                 </div>
+                {% endif %}
 
                 <p class="text-quiet mt-4 mb-0" style="font-size:.8rem;">
                     Posted {{ job.created_at|timesince }} ago
@@ -130,11 +132,15 @@
                 {% if user.is_authenticated %}
                     {% if has_applied %}
                         <div class="text-center">
-                            <div style="font-size:2rem;">✓</div>
-                            <p class="fw-semibold mb-1">You're in the running.</p>
+                            <div style="font-size:2rem; color:#16a34a;"><i class="bi bi-check-circle-fill"></i></div>
+                            <p class="fw-semibold mb-1 mt-2">Application sent!</p>
                             <p class="text-quiet small mb-0">
-                                The employer has been notified. Fingers crossed!
+                                The employer has been notified. We'll email you at
+                                <strong>{{ user.email }}</strong> if they respond.
                             </p>
+                            <a href="{% url 'my_applications' %}" class="btn btn-outline-secondary btn-sm mt-3">
+                                Track all applications
+                            </a>
                         </div>
                     {% else %}
                         <p class="fw-semibold mb-1 text-center">Ready to apply?</p>

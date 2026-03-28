@@ -12,6 +12,7 @@
     <div class="card p-4 p-md-5 mt-3">
         <form method="post">
             {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
             <div class="mb-3">
                 <label class="form-label fw-semibold small" for="emailInput">Email address</label>

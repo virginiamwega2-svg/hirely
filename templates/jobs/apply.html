@@ -5,10 +5,9 @@
 {% block content %}
 <div class="container" style="max-width:520px;">
     <div class="pt-4 pb-2 text-center">
-        <!-- Step indicator — reassures the parent this is almost over -->
         <div class="step-pill mb-3">
             <i class="bi bi-check-circle-fill"></i>
-            Almost done — one step left
+            One step to go
         </div>
         <h2 class="fw-bold mb-1" style="font-size:1.5rem;">Apply for this role</h2>
         <p class="text-quiet mb-0">
@@ -24,9 +23,9 @@
              style="background:#f0f4ff; border:1px solid #dbe4ff;">
             <i class="bi bi-lightning-fill" style="color:#2563eb; font-size:1.2rem;"></i>
             <div style="font-size:.87rem;">
-                <div class="fw-semibold" style="color:var(--text);">{{ job.get_job_type_display }}
+                <div class="fw-semibold" style="color:var(--text);">{{ job.get_schedule_type_display }}
                     {% if job.is_remote %}&nbsp;&middot;&nbsp; Remote{% endif %}
-                    {% if job.hours_per_week %}&nbsp;&middot;&nbsp; {{ job.hours_per_week }}{% endif %}
+                    {% if job.hours_per_day %}&nbsp;&middot;&nbsp; {{ job.hours_per_day }} hrs/day{% endif %}
                 </div>
                 {% if job.salary %}
                     <div class="text-quiet">Pay: {{ job.salary }}</div>
@@ -37,11 +36,20 @@
         <form method="post" enctype="multipart/form-data" id="applyForm">
             {% csrf_token %}
 
+            <!-- No cover letter callout — shown first so parent knows before uploading -->
+            <div class="d-flex gap-2 align-items-center p-3 rounded-3 mb-4"
+                 style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
+                <span style="font-size:.87rem; color:#15803d;">
+                    No cover letter needed — just send your CV if you have one.
+                </span>
+            </div>
+
             <!-- Upload zone — large, tap-friendly, drag-and-drop ready -->
             <div class="mb-4">
                 <label class="label-sm d-block mb-2">
                     Your CV / Resume
-                    <span class="text-quiet fw-normal text-lowercase">&nbsp;(optional — skip if you don't have one handy)</span>
+                    <span class="text-quiet fw-normal text-lowercase">&nbsp;(optional)</span>
                 </label>
                 <div class="upload-zone" id="uploadZone">
                     <input type="file" name="resume" id="resumeInput" accept=".pdf,.doc,.docx">
@@ -59,15 +67,6 @@
                 </div>
             </div>
 
-            <!-- No cover letter callout -->
-            <div class="d-flex gap-2 align-items-center p-3 rounded-3 mb-4"
-                 style="background:#f0fdf4; border:1px solid #bbf7d0;">
-                <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
-                <span style="font-size:.87rem; color:#15803d;">
-                    No cover letter needed — your application is ready to send.
-                </span>
-            </div>
-
             <!-- Single primary CTA — no cancel button to split attention -->
             <button type="submit" class="btn btn-primary w-100"
                     style="padding:15px; font-size:1.05rem; font-weight:600;">
@@ -76,8 +75,8 @@
 
             <!-- What happens next — reduces post-submit anxiety -->
             <p class="text-quiet text-center mt-3 mb-0" style="font-size:.82rem;">
-                We'll notify {{ job.company }} straight away.
-                You can track this in <a href="{% url 'my_applications' %}">My Jobs</a>.
+                {{ job.company }} will see your application immediately.
+                Track it in <a href="{% url 'my_applications' %}">My Jobs</a>.
             </p>
         </form>
 

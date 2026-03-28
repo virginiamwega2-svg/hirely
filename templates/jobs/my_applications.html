@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center pt-4 mb-4 flex-wrap gap-2">
         <div>
             <h2 class="fw-bold mb-1">My Jobs</h2>
-            <p class="text-quiet mb-0" style="font-size:.9rem;">Here's where things stand.</p>
+            <p class="text-quiet mb-0" style="font-size:.9rem;">Your applications, most recent first.</p>
         </div>
         <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm">Find More Roles</a>
     </div>
@@ -25,11 +25,16 @@
                            style="color:var(--text); font-size:.97rem;">
                             {{ app.job.title }}
                         </a>
-                        <!-- Company and schedule type together -->
+                        <!-- Company, location, salary -->
                         <div class="text-quiet mt-1" style="font-size:.83rem;">
-                            {{ app.job.company }} &middot; {{ app.job.location }}
+                            {{ app.job.company }}{% if app.job.location %} &middot; {{ app.job.location }}{% endif %}
                         </div>
-                        <!-- Schedule reminder — helps parent remember what they applied to -->
+                        {% if app.job.salary %}
+                        <div class="fw-semibold mt-1" style="font-size:.85rem; color:var(--text);">
+                            {{ app.job.salary }}
+                        </div>
+                        {% endif %}
+                        <!-- Schedule + hours — helps parent remember what they applied to -->
                         <div class="d-flex flex-wrap gap-1 mt-2">
                             <span class="badge" style="background:#eff6ff;color:#2563eb;border-radius:6px;">
                                 {{ app.job.get_schedule_type_display }}
@@ -37,6 +42,11 @@
                             {% if app.job.is_remote %}
                                 <span class="badge" style="background:#f0fdf4;color:#16a34a;border-radius:6px;">
                                     Remote
+                                </span>
+                            {% endif %}
+                            {% if app.job.hours_per_day %}
+                                <span class="badge bg-light text-dark border" style="border-radius:6px;">
+                                    {{ app.job.hours_per_day }} hrs/day
                                 </span>
                             {% endif %}
                         </div>
@@ -70,7 +80,7 @@
                                   style="background:#fff7f7;color:#9b1c1c;border:1px solid #fecaca;border-radius:6px;font-size:.8rem;">
                                 Not selected
                             </span>
-                            <div class="text-quiet mt-1" style="font-size:.75rem;">Keep going — the right one's out there</div>
+                            <div class="text-quiet mt-1" style="font-size:.75rem;">Not the right fit — keep looking</div>
                         {% endif %}
                     </div>
                 </div>

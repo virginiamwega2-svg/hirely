@@ -1,11 +1,46 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Hirely — Flexible Jobs for Busy Parents{% endblock %}
 
 {% block content %}
 
-<div class="hero text-center mb-5">
-    <div class="container" style="max-width:640px;">
+{% if user.is_authenticated %}
+<!-- Returning user — greeting, not a sales pitch ────────────────── -->
+<div class="border-bottom mb-5" style="background:var(--card-bg);">
+    <div class="container py-4" style="max-width:860px;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h2 class="fw-bold mb-1" style="font-size:1.4rem;">
+                    Welcome back{% if user.email %}, {{ user.email|cut:"@"|slice:":20" }}{% endif %}.
+                </h2>
+                <p class="text-quiet mb-0">
+                    {{ total_jobs }} flexible role{{ total_jobs|pluralize }} open right now
+                    — find something that fits your week.
+                </p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'job_list' %}" class="btn btn-primary px-4">Browse roles</a>
+                <a href="{% url 'my_applications' %}" class="btn btn-outline-secondary px-4">My applications</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Hero with video background ─────────────────────────────────── -->
+<div class="hero-video-wrap text-center mb-5">
+
+    <!-- Video — muted, looping, hidden on reduced-motion -->
+    <video class="hero-video" autoplay muted loop playsinline
+           poster="{% static 'images/hero-poster.jpg' %}">
+        <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
+    </video>
+
+    <!-- Dark overlay so text stays readable -->
+    <div class="hero-overlay"></div>
+
+    <!-- Content sits on top -->
+    <div class="hero-content container" style="max-width:640px;">
         <h1 class="fw-bold mb-2" style="font-size:clamp(1.8rem,5vw,2.6rem); line-height:1.2;">
             Work that fits around<br>school, naps, and life.
         </h1>
@@ -24,6 +59,42 @@
         </div>
     </div>
 </div>
+{% endif %}
+
+<style>
+.hero-video-wrap {
+    position: relative;
+    overflow: hidden;
+    padding: 80px 0;
+    background: linear-gradient(135deg, #3b6ff0 0%, #30b8df 100%); /* fallback */
+    color: white;
+}
+@media (max-width: 767px) { .hero-video-wrap { padding: 52px 0; } }
+
+.hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+/* Pause video for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .hero-video { display: none; }
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 30, 80, 0.58);
+    z-index: 1;
+}
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+</style>
 
 <div class="container">
 
@@ -82,11 +153,14 @@
 
     </div>
 
-    <!-- Latest roles ─────────────────────────────────────────────── -->
+    <!-- Roles hiring now ──────────────────────────────────────────── -->
     {% if jobs %}
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0">Latest roles</h5>
-        <a href="{% url 'job_list' %}" class="btn btn-sm btn-outline-primary">See all</a>
+        <div>
+            <h5 class="fw-bold mb-0">Roles hiring now</h5>
+            <p class="text-quiet small mb-0">All open today — apply in under 60 seconds</p>
+        </div>
+        <a href="{% url 'job_list' %}" class="btn btn-sm btn-outline-primary">See all roles</a>
     </div>
     <div class="row g-3 mb-5">
         {% for job in jobs %}
@@ -103,9 +177,13 @@
                             <div class="text-quiet" style="font-size:.83rem;">
                                 {{ job.company }}{% if job.location %} &middot; {{ job.location }}{% endif %}
                             </div>
+                            {% if job.salary %}
+                            <div class="fw-semibold mt-1" style="font-size:.88rem; color:var(--text);">
+                                {{ job.salary }}
+                            </div>
+                            {% endif %}
                         </div>
                         <span class="badge bg-{{ job.flex_colour }} flex-shrink-0">{{ job.flex_label }}</span>
-                    </div>
                     </div>
                     <p class="text-quiet mb-2" style="font-size:.8rem; line-height:1.4;
                        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
@@ -121,9 +199,7 @@
                         {% if job.hours_per_day %}
                             <span class="badge bg-light text-dark border">{{ job.hours_per_day }} hrs/day</span>
                         {% endif %}
-                        {% if job.salary %}
-                            <span class="badge bg-success">{{ job.salary }}</span>
-                        {% endif %}
+                        <span class="badge bg-light text-dark border ms-auto">{{ job.created_at|timesince }} ago</span>
                     </div>
                 </div>
             </a>
@@ -136,6 +212,45 @@
         <p class="text-quiet mt-3">No roles posted yet — check back soon.</p>
     </div>
     {% endif %}
+
+    <!-- Parent testimonials ────────────────────────────────────────── -->
+    <div class="row g-3 mb-5">
+        <div class="col-12">
+            <h5 class="fw-bold mb-3">Parents who found their fit</h5>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-4 h-100" style="border-left:3px solid #2563eb;">
+                <p class="mb-3" style="font-size:.93rem; line-height:1.65; color:var(--text);">
+                    "I was looking for something that fit around school pickups.
+                    Found a 3-day remote role in my first week. No cover letter meant
+                    I actually applied instead of putting it off."
+                </p>
+                <div class="d-flex align-items-center gap-2 mt-auto">
+                    <div class="co-avatar" style="width:34px;height:34px;font-size:.85rem;">S</div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.85rem;">Sarah M.</div>
+                        <div class="text-quiet" style="font-size:.78rem;">Mum of two &middot; London</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-4 h-100" style="border-left:3px solid #2563eb;">
+                <p class="mb-3" style="font-size:.93rem; line-height:1.65; color:var(--text);">
+                    "Finally a job board that doesn't make me feel guilty for wanting
+                    school hours. Got hired as a virtual assistant within two weeks of
+                    signing up."
+                </p>
+                <div class="d-flex align-items-center gap-2 mt-auto">
+                    <div class="co-avatar" style="width:34px;height:34px;font-size:.85rem;">P</div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:.85rem;">Priya K.</div>
+                        <div class="text-quiet" style="font-size:.78rem;">Parent of three &middot; Manchester</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Employer CTA ─────────────────────────────────────────────── -->
     <div class="p-4 p-md-5 mb-4 text-center rounded-3" style="background:#f0f4ff; border:1px solid #dbe4ff;">
