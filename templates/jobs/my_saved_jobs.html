@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Saved Roles — Hirely{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:700px;">
+
+    <div class="d-flex justify-content-between align-items-center pt-4 mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Saved Roles</h2>
+            <p class="text-quiet mb-0" style="font-size:.9rem;">Roles you've bookmarked — apply when the time is right.</p>
+        </div>
+        <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm">Find More Roles</a>
+    </div>
+
+    {% if saved_jobs %}
+        <div class="d-flex flex-column gap-2 mb-5">
+            {% for saved in saved_jobs %}
+            <div class="card p-4">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="co-avatar">{{ saved.job.company|first }}</div>
+                            <div>
+                                <a href="{% url 'job_detail' saved.job.pk %}"
+                                   class="fw-semibold text-decoration-none"
+                                   style="color:var(--text); font-size:.97rem;">
+                                    {{ saved.job.title }}
+                                </a>
+                                <div class="text-quiet mt-1" style="font-size:.83rem;">
+                                    {{ saved.job.company }}{% if saved.job.location %} &middot; {{ saved.job.location }}{% endif %}
+                                </div>
+                                {% if saved.job.salary %}
+                                <div class="fw-semibold mt-1" style="font-size:.85rem; color:var(--text);">
+                                    {{ saved.job.salary }}
+                                </div>
+                                {% endif %}
+                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                    {% include 'jobs/components/job_badges.html' with job=saved.job %}
+                                </div>
+                                <div class="text-quiet mt-2" style="font-size:.78rem;">
+                                    Saved {{ saved.saved_at|timesince }} ago
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 flex-shrink-0 align-self-start">
+                        <a href="{% url 'job_detail' saved.job.pk %}" class="btn btn-primary btn-sm">
+                            View &amp; Apply
+                        </a>
+                        <form method="post" action="{% url 'toggle_save_job' saved.job.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                    title="Remove from saved">
+                                <i class="bi bi-heart-fill text-danger"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="empty-icon-wrap mx-auto mb-3" style="background:#fff1f2;">
+                <i class="bi bi-heart" style="color:#e11d48;"></i>
+            </div>
+            <h5 class="fw-bold mb-1">No saved roles yet</h5>
+            <p class="text-quiet" style="max-width:300px; margin:0 auto;">
+                Tap the heart on any role to save it — useful when you're not quite ready to apply.
+            </p>
+            <a href="{% url 'job_list' %}" class="btn btn-primary mt-3 px-4">Browse Roles</a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

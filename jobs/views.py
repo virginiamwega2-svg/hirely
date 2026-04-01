@@ -9,6 +9,7 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.urls import reverse
 from django.conf import settings
+from django.utils.http import url_has_allowed_host_and_scheme
 from .models import Job, Application
 from .forms import RegisterForm, JobForm, ApplicationForm
 
@@ -118,8 +119,10 @@ def login_view(request):
             user = None
         if user:
             login(request, user)
-            next_url = request.POST.get('next') or request.GET.get('next') or reverse('home')
-            return redirect(next_url)
+            next_url = request.POST.get('next') or request.GET.get('next') or ''
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                return redirect(next_url)
+            return redirect(reverse('home'))
         messages.error(request, 'Invalid email or password.')
         return render(request, 'jobs/login.html', {'has_error': True, 'next': request.POST.get('next', '')})
     return render(request, 'jobs/login.html', {'next': request.GET.get('next', '')})

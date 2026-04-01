@@ -1,0 +1,31 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt gunicorn whitenoise psycopg2-binary
+
+      - name: Run tests
+        env:
+          SECRET_KEY: ci-secret-key-not-used-in-production
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost
+        run: python manage.py test --verbosity=2
+
+      - name: Django deployment check
+        env:
+          SECRET_KEY: ci-secret-key-not-used-in-production
+          DEBUG: 'False'
+          ALLOWED_HOSTS: example.com
+        run: python manage.py check --deploy --settings=hirely.settings

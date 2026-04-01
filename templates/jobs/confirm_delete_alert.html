@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Alert — Hirely{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px;">
+    <div class="card p-4 p-md-5 mt-5 text-center">
+        <div style="font-size:2rem;"><i class="bi bi-bell-slash" style="color:var(--muted);"></i></div>
+        <h2 class="fw-bold mt-3 mb-1" style="font-size:1.4rem;">Delete this alert?</h2>
+        <p class="text-quiet mb-4" style="font-size:.9rem;">
+            {% if alert.keywords %}"{{ alert.keywords }}"{% else %}All roles{% endif %}
+            &nbsp;&middot;&nbsp; {{ alert.get_frequency_display }}
+            {% if alert.schedule_type %}&nbsp;&middot;&nbsp; {{ alert.get_schedule_type_display }}{% endif %}
+        </p>
+        <form method="post" class="d-flex gap-2 justify-content-center">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger px-4">Delete alert</button>
+            <a href="{% url 'job_alerts' %}" class="btn btn-outline-secondary px-4">Keep it</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

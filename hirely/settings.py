@@ -47,6 +47,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,8 +81,12 @@ WSGI_APPLICATION = 'hirely.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': config('DB_ENGINE', default='django.db.backends.sqlite3'),
+        'NAME':     config('DB_NAME',     default=str(BASE_DIR / 'db.sqlite3')),
+        'USER':     config('DB_USER',     default=''),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST':     config('DB_HOST',     default=''),
+        'PORT':     config('DB_PORT',     default=''),
     }
 }
 
@@ -121,15 +126,32 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (uploaded resumes)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Email (prints to terminal in development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@hirely.com'
+# Email
+EMAIL_BACKEND    = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST       = config('EMAIL_HOST',    default='')
+EMAIL_PORT       = config('EMAIL_PORT',    default=587, cast=int)
+EMAIL_USE_TLS    = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER  = config('EMAIL_HOST_USER',     default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='noreply@hirely.com')
+
+# Production security (only active when DEBUG=False)
+if not DEBUG:
+    SECURE_SSL_REDIRECT             = True
+    SESSION_COOKIE_SECURE           = True
+    CSRF_COOKIE_SECURE              = True
+    SECURE_HSTS_SECONDS             = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS  = True
+    SECURE_HSTS_PRELOAD             = True
+    SECURE_CONTENT_TYPE_NOSNIFF     = True
 
 # Map Django's 'error' tag to Bootstrap's 'danger' class
 MESSAGE_TAGS = {message_constants.ERROR: 'danger'}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Withdraw Application — Hirely{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px;">
+    <div class="card p-4 p-md-5 mt-5 text-center">
+        <div style="font-size:2rem;"><i class="bi bi-x-circle" style="color:var(--muted);"></i></div>
+        <h2 class="fw-bold mt-3 mb-1" style="font-size:1.4rem;">Withdraw this application?</h2>
+        <p class="fw-semibold mb-0" style="color:var(--text);">{{ app.job.title }}</p>
+        <p class="text-quiet mb-4" style="font-size:.88rem;">
+            {{ app.job.company }}{% if app.job.location %} &middot; {{ app.job.location }}{% endif %}
+        </p>
+        <p class="text-quiet mb-4" style="font-size:.85rem;">
+            The employer won't be notified. You can apply again later if the role is still open.
+        </p>
+        <form method="post" class="d-flex gap-2 justify-content-center">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger px-4">Withdraw</button>
+            <a href="{% url 'my_applications' %}" class="btn btn-outline-secondary px-4">Keep application</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
