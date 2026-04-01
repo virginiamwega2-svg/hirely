@@ -146,7 +146,11 @@ DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='noreply@hirely.com'
 
 # Production security (only active when DEBUG=False)
 if not DEBUG:
-    SECURE_SSL_REDIRECT             = True
+    # Render terminates SSL at their edge and proxies plain HTTP to the app.
+    # Trust the X-Forwarded-Proto header so Django knows the original request
+    # was HTTPS. Do NOT set SECURE_SSL_REDIRECT — Render's internal health
+    # checks use plain HTTP and would get redirect-looped into deploy failure.
+    SECURE_PROXY_SSL_HEADER         = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE           = True
     CSRF_COOKIE_SECURE              = True
     SECURE_HSTS_SECONDS             = 31536000
