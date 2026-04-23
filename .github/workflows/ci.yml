@@ -56,10 +56,15 @@ jobs:
     name: Deploy (Render)
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.RENDER_DEPLOY_HOOK_URL != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
 
     steps:
       - name: Trigger Render deploy hook
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL != '' }}
         run: curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL" >/dev/null
+
+      - name: Deploy hook not configured
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL == '' }}
+        run: echo "RENDER_DEPLOY_HOOK_URL is not set; skipping deploy."
