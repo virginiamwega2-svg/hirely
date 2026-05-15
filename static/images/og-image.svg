@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+    <linearGradient id="markFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e6fffa"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- soft radial highlight -->
+  <circle cx="950" cy="120" r="280" fill="#ffffff" fill-opacity="0.10"/>
+  <circle cx="250" cy="540" r="220" fill="#ffffff" fill-opacity="0.08"/>
+
+  <!-- H mark -->
+  <g transform="translate(120, 180)">
+    <circle cx="80" cy="80" r="80" fill="url(#markFill)"/>
+    <text x="80" y="115" text-anchor="middle"
+          font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+          font-size="100" font-weight="800" fill="#10b981" letter-spacing="-4">H</text>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="320" y="290"
+        font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="120" font-weight="800" fill="#ffffff" letter-spacing="-4">Hirely</text>
+
+  <!-- Tagline -->
+  <text x="120" y="430"
+        font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="56" font-weight="600" fill="#ffffff" opacity="0.95">
+    Work that fits around school,
+  </text>
+  <text x="120" y="510"
+        font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="56" font-weight="600" fill="#ffffff" opacity="0.95">
+    naps, and life.
+  </text>
+
+  <!-- Footer line -->
+  <text x="120" y="585"
+        font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="28" font-weight="500" fill="#ffffff" opacity="0.85">
+    Built for parents and employers worldwide
+  </text>
+</svg>

@@ -20,6 +20,18 @@ from .forms import RegisterForm, JobForm, ApplicationForm
 logger = logging.getLogger(__name__)
 
 
+def og_image(request):
+    """Serve the static OG share image at a root path so social
+    crawlers don't have to follow /static/ redirects."""
+    from django.http import FileResponse
+    from django.contrib.staticfiles import finders
+    path = finders.find('images/og-image.svg')
+    if not path:
+        from django.http import Http404
+        raise Http404()
+    return FileResponse(open(path, 'rb'), content_type='image/svg+xml')
+
+
 @login_required
 def parent_profile(request):
     """Show the parent the structured profile we extracted from their CV."""
