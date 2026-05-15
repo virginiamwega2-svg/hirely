@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hirely{% endblock %}</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2310b981'/><stop offset='1' stop-color='%2314b8a6'/></linearGradient></defs><rect width='32' height='32' rx='10' fill='url(%23g)'/><text x='16' y='23' text-anchor='middle' font-family='system-ui,sans-serif' font-size='18' font-weight='800' fill='white'>H</text></svg>">
+    <!-- Apple touch icon — shown when added to iOS home screen.
+         180x180 SVG works on iOS 13+; iOS strips alpha so the
+         emerald gradient becomes the background. -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2310b981'/><stop offset='1' stop-color='%2314b8a6'/></linearGradient></defs><rect width='180' height='180' rx='40' fill='url(%23g)'/><text x='90' y='126' text-anchor='middle' font-family='system-ui,sans-serif' font-size='108' font-weight='800' fill='white'>H</text></svg>">
+    <!-- iOS Safari treats this as the home-screen title. -->
+    <meta name="apple-mobile-web-app-title" content="Hirely">
+    <meta name="theme-color" content="#10b981">
     <meta name="description" content="{% block meta_description %}Flexible jobs for busy parents — find roles that fit around school, naps, and life.{% endblock %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
