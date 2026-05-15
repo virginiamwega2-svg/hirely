@@ -24,12 +24,20 @@
         </div>
     {% elif profile.parse_failed %}
         <div class="card p-4 mt-3">
-            <p class="fw-semibold mb-1">Couldn't read your last CV.</p>
-            <p class="text-quiet small mb-3">
-                The file uploaded fine for the employer, but Hirely couldn't extract clean text from it
-                — usually means it's a scanned image instead of a real PDF. Try re-saving as a PDF
-                from Word/Google Docs and applying once more.
-            </p>
+            {% if profile.raw_resume_text %}
+                <p class="fw-semibold mb-1">Your CV is on file, but Hirely's AI hasn't read it yet.</p>
+                <p class="text-quiet small mb-3">
+                    Text was extracted successfully — the AI step just couldn't run, usually because
+                    the site is between top-ups. Your next application will trigger another attempt.
+                </p>
+            {% else %}
+                <p class="fw-semibold mb-1">Couldn't read your last CV.</p>
+                <p class="text-quiet small mb-3">
+                    The file uploaded fine for the employer, but Hirely couldn't extract clean text from it
+                    — usually means it's a scanned image instead of a real PDF. Try re-saving as a PDF
+                    from Word/Google Docs and applying once more.
+                </p>
+            {% endif %}
             <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm align-self-start">Browse roles</a>
         </div>
     {% else %}
