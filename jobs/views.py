@@ -899,6 +899,103 @@ def summarise_application(request, pk):
     return JsonResponse({'summary': summary, 'suggestion': suggestion, 'cached': False})
 
 
+# ─────────────────────────────────────────────────────────────────────
+# Interview coaching — when an application is accepted, parent can
+# generate likely questions + parent-friendly answer scaffolds for
+# this specific role.
+# ─────────────────────────────────────────────────────────────────────
+
+INTERVIEW_SYSTEM_PROMPT = """You help a parent prepare for an interview for a specific job on Hirely.
+
+Output STRICT JSON ONLY — no prose around it. Shape:
+{
+  "questions": [
+    {"q": "<likely interview question>", "tip": "<one-sentence parent-friendly framing>"},
+    ...
+  ]
+}
+
+Rules:
+- Return EXACTLY 5 questions.
+- Tailor every question to THIS role: schedule, hours, remote-ness, specific responsibilities. No generic "tell me about yourself".
+- Tips should be short, warm, and concrete. Suggest what to lean on, never what to lie about.
+- Frame schedule and family realities as strengths or normal facts. Never coach the parent to hide that they're a parent.
+- Use plain English. No interview-coach jargon ("STAR method", "synergy", etc).
+"""
+
+
+@login_required
+@require_POST
+def interview_prep(request, pk):
+    """POST → returns 5 tailored questions + tips for an accepted application."""
+    app = get_object_or_404(
+        Application.objects.select_related('job', 'applicant'),
+        pk=pk,
+        applicant=request.user,
+    )
+    if app.status != 'accepted':
+        return JsonResponse({'error': 'Only available once the role has accepted you.'}, status=400)
+
+    if not settings.ANTHROPIC_API_KEY:
+        return JsonResponse({'questions': [], 'error': "AI assistant isn't connected yet."}, status=200)
+
+    j = app.job
+    profile = getattr(request.user, 'parent_profile', None)
+    profile_blurb = ''
+    if profile and not profile.parse_failed and profile.summary:
+        profile_blurb = (
+            f"\nWhat the parent's CV says about them:\n{profile.summary}"
+            f"\nTop skills: {profile.top_skills or '(none)'}\n"
+        )
+
+    user_prompt = (
+        f"Role: {j.title} at {j.company}\n"
+        f"Schedule: {j.get_schedule_type_display()}"
+        f"{' · Remote' if j.is_remote else ''}"
+        f"{f' · {j.hours_per_day} hrs/day' if j.hours_per_day else ''}\n"
+        f"Pay: {j.salary or 'not specified'}\n"
+        f"About the role: {(j.description or '')[:500]}\n"
+        f"Requirements: {(j.requirements or '(none specified)')[:300]}\n"
+        f"{profile_blurb}"
+        f"\nReturn the JSON now."
+    )
+
+    from anthropic import Anthropic, APIError
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    try:
+        resp = client.messages.create(
+            model=CHAT_MODEL,
+            max_tokens=900,
+            system=INTERVIEW_SYSTEM_PROMPT,
+            messages=[{'role': 'user', 'content': user_prompt}],
+        )
+    except APIError as e:
+        logger.warning('interview_prep API error: %s', e)
+        msg = str(getattr(e, 'message', '') or e)
+        friendly = (
+            "AI is resting — the site needs to top up Anthropic credits."
+            if 'credit balance' in msg.lower()
+            else "Couldn't draft right now — try again in a moment."
+        )
+        return JsonResponse({'questions': [], 'error': friendly}, status=200)
+
+    raw = ''.join(b.text for b in resp.content if getattr(b, 'type', None) == 'text').strip()
+    if raw.startswith('```'):
+        raw = raw.strip('`').lstrip('json').strip()
+    try:
+        data = json.loads(raw)
+        questions = [
+            {'q': str(item.get('q', ''))[:280], 'tip': str(item.get('tip', ''))[:280]}
+            for item in (data.get('questions') or [])[:5]
+            if isinstance(item, dict) and item.get('q')
+        ]
+    except (json.JSONDecodeError, AttributeError):
+        logger.warning('interview_prep bad JSON: %r', raw[:200])
+        questions = []
+
+    return JsonResponse({'questions': questions})
+
+
 @login_required
 def update_application_status(request, pk):
     app = get_object_or_404(Application, pk=pk, job__posted_by=request.user)

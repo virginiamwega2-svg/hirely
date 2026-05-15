@@ -56,6 +56,16 @@
                         <div class="text-quiet mt-2" style="font-size:.78rem;">
                             Applied {{ app.applied_at|timesince }} ago
                         </div>
+
+                        {% if app.status == 'accepted' %}
+                        <!-- Interview coaching CTA — only on accepted apps -->
+                        <div class="interview-prep mt-3" data-app-id="{{ app.pk }}">
+                            <button type="button" class="btn btn-outline-primary btn-sm prep-trigger">
+                                <i class="bi bi-stars" aria-hidden="true"></i>
+                                <span class="prep-label">Prep me for the interview</span>
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- Status — clear and human -->
@@ -101,5 +111,86 @@
         </div>
     {% endif %}
 
+    {% csrf_token %}
 </div>
+
+<style>
+.interview-prep .prep-trigger i.bi-stars { color: #6366f1; }
+.prep-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.prep-item {
+    background: linear-gradient(90deg, #f5f7ff 0%, #f0fdf4 120%);
+    border: 1px solid #e1e8ff;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+.prep-q { font-weight: 600; color: var(--text); margin-bottom: 4px; font-size: .95rem; }
+.prep-tip { font-size: .85rem; color: #475569; line-height: 1.5; }
+</style>
+
+<script>
+(function () {
+  const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+  if (!csrf) return;
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  document.querySelectorAll('.interview-prep').forEach(wrap => {
+    const btn = wrap.querySelector('.prep-trigger');
+    const appId = wrap.dataset.appId;
+    const label = btn.querySelector('.prep-label');
+
+    btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
+      btn.disabled = true;
+      const prev = label.textContent;
+      label.textContent = 'Drafting…';
+
+      // Pulse skeletons while we wait.
+      const skel = document.createElement('div');
+      skel.className = 'prep-list';
+      skel.innerHTML = `
+        <div class="prep-item"><span class="skeleton" style="width:80%;height:.9em;">·</span></div>
+        <div class="prep-item"><span class="skeleton" style="width:70%;height:.9em;">·</span></div>
+        <div class="prep-item"><span class="skeleton" style="width:75%;height:.9em;">·</span></div>`;
+      wrap.appendChild(skel);
+
+      try {
+        const resp = await fetch(`/my-applications/${appId}/interview-prep/`, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/json' },
+        });
+        const data = await resp.json();
+        skel.remove();
+        if (data.questions && data.questions.length) {
+          const list = document.createElement('div');
+          list.className = 'prep-list';
+          list.innerHTML = data.questions.map(item => `
+            <div class="prep-item">
+              <div class="prep-q">${escapeHtml(item.q)}</div>
+              <div class="prep-tip">${escapeHtml(item.tip)}</div>
+            </div>`).join('');
+          wrap.appendChild(list);
+          btn.style.display = 'none';
+        } else {
+          label.textContent = data.error || 'Try again';
+          setTimeout(() => { label.textContent = prev; btn.disabled = false; }, 2500);
+        }
+      } catch {
+        skel.remove();
+        label.textContent = 'Try again';
+        setTimeout(() => { label.textContent = prev; btn.disabled = false; }, 2000);
+      }
+    });
+  });
+})();
+</script>
 {% endblock %}
