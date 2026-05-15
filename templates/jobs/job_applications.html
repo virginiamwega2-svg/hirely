@@ -95,10 +95,11 @@
         </nav>
         {% endif %}
     {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-people display-1 text-muted"></i>
-            <h5 class="mt-3 fw-semibold">No applications yet</h5>
-            <p class="text-muted">Share your job listing to attract flexible workers.</p>
+        <div class="empty-state">
+            <span class="hirely-mark hirely-mark--lg" aria-hidden="true">H</span>
+            <h5>No applications yet — we're keeping watch.</h5>
+            <p>Share the role link with your network. Roles with clear hours and salary fill fastest.</p>
+            <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline-primary">View the role page</a>
         </div>
     {% endif %}
 
@@ -171,7 +172,14 @@
     const label = btn.querySelector('.ai-label');
     const prev = label.textContent;
     btn.disabled = true;
-    label.textContent = 'Thinking…';
+
+    // Replace the button area with a skeleton bar while we wait.
+    slot.innerHTML = `
+      <div class="ai-summary-line" aria-busy="true" aria-label="Hirely is thinking">
+        <i class="bi bi-stars"></i>
+        <span class="skeleton" style="height:1em; width:62%;">·</span>
+        <span class="skeleton" style="height:1em; width:64px;">·</span>
+      </div>`;
 
     try {
       const resp = await fetch(`/dashboard/applications/${appId}/summarise/`, {
@@ -182,12 +190,19 @@
       if (data.summary) {
         render(slot, data.summary, data.suggestion);
       } else {
-        label.textContent = data.error || 'Try again';
-        setTimeout(() => { label.textContent = prev; btn.disabled = false; }, 2500);
+        // Restore button so the user can retry.
+        slot.innerHTML = `
+          <button type="button" class="btn btn-sm btn-outline-primary ai-trigger">
+            <i class="bi bi-stars"></i>
+            <span class="ai-label">${escapeHtml(data.error || 'Try again')}</span>
+          </button>`;
       }
     } catch {
-      label.textContent = 'Try again';
-      setTimeout(() => { label.textContent = prev; btn.disabled = false; }, 2000);
+      slot.innerHTML = `
+        <button type="button" class="btn btn-sm btn-outline-primary ai-trigger">
+          <i class="bi bi-stars"></i>
+          <span class="ai-label">Try again</span>
+        </button>`;
     }
   });
 })();

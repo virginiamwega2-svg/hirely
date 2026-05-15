@@ -110,11 +110,27 @@
   }
 
   function typingIndicator() {
-    const div = document.createElement('div');
-    div.className = 'chat-bubble chat-bubble-assistant chat-typing';
-    div.innerHTML = '<span></span><span></span><span></span>';
-    thread.appendChild(div);
-    return div;
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-loading';
+    wrap.innerHTML = `
+      <div class="chat-bubble chat-bubble-assistant chat-typing"
+           aria-live="polite" aria-label="Hirely is thinking">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="chat-job-grid chat-job-grid-skeleton" aria-hidden="true">
+        <div class="chat-job-card-skel">
+          <span class="skeleton" style="width:60%; height:.9em;">·</span>
+          <span class="skeleton" style="width:40%; height:.75em;">·</span>
+          <span class="skeleton" style="width:30%; height:.7em;">·</span>
+        </div>
+        <div class="chat-job-card-skel">
+          <span class="skeleton" style="width:55%; height:.9em;">·</span>
+          <span class="skeleton" style="width:45%; height:.75em;">·</span>
+          <span class="skeleton" style="width:35%; height:.7em;">·</span>
+        </div>
+      </div>`;
+    thread.appendChild(wrap);
+    return wrap;
   }
 
   function jobCard(j) {
@@ -423,6 +439,18 @@
 }
 .tag-remote { background: #f0fdf4; color: #16a34a; }
 .tag-schedule { background: #f0f4ff; color: #2563eb; }
+
+.chat-loading { display: flex; flex-direction: column; gap: 10px; align-self: stretch; }
+.chat-job-grid-skeleton { opacity: .85; }
+.chat-job-card-skel {
+  background: #fff;
+  border: 1px solid #e6ebf5;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 </style>
 
 <!-- Anchor for the "browse all" jump -->

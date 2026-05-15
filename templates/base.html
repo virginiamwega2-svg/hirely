@@ -252,6 +252,42 @@
         .hirely-mark--sm { width: 22px; height: 22px; font-size: .78rem; vertical-align: -4px; }
         .hirely-mark--lg { width: 40px; height: 40px; font-size: 1.2rem; vertical-align: -10px; }
 
+        /* ── Empty state — friendly, consistent across pages ───────── */
+        .empty-state {
+            text-align: center;
+            padding: 56px 16px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        .empty-state .hirely-mark { margin-bottom: 14px; }
+        .empty-state h5 {
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .empty-state p {
+            color: var(--muted);
+            margin-bottom: 18px;
+            font-size: .92rem;
+            line-height: 1.55;
+        }
+
+        /* ── Skeleton loader — animated shimmer for "thinking" UI ─── */
+        .skeleton {
+            display: inline-block;
+            background: linear-gradient(90deg,#eef2ff 0%, #f8fafc 50%, #eef2ff 100%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.4s ease-in-out infinite;
+            border-radius: 6px;
+            color: transparent;
+            user-select: none;
+        }
+        @keyframes skeleton-shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
         /* ── Footer — light, not heavy dark slab ──────────────────── */
         footer {
             background: #fff;

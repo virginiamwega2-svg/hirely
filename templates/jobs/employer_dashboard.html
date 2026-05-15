@@ -7,11 +7,14 @@
 
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
-            <h2 class="fw-bold mb-1">My Flexible Roles</h2>
-            <p class="text-muted mb-0">Respond quickly — parents are juggling a lot and appreciate a fast reply.</p>
+            <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="hirely-mark hirely-mark--sm" aria-hidden="true">H</span>
+                Your roles
+            </h2>
+            <p class="text-muted mb-0">Parents are juggling a lot — a quick reply goes a long way.</p>
         </div>
         <a href="{% url 'post_job' %}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Post a Flexible Role
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> Post a role
         </a>
     </div>
 
@@ -66,7 +69,7 @@
                             </div>
                             <div class="d-flex gap-2 flex-shrink-0 align-self-center flex-wrap">
                                 <a href="{% url 'job_applications' job.pk %}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-people"></i> View Applicants
+                                    <i class="bi bi-people" aria-hidden="true"></i> See applicants
                                 </a>
                                 <a href="{% url 'edit_job' job.pk %}" class="btn btn-outline-secondary btn-sm">
                                     <i class="bi bi-pencil"></i> Edit
@@ -82,17 +85,14 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="text-center py-5" style="max-width:420px; margin:0 auto;">
-            <i class="bi bi-stars display-1 text-muted"></i>
-            <h5 class="mt-3 fw-semibold">Your first role is one step away</h5>
-            <p class="text-muted mb-1">
-                Takes about 5 minutes to post. Be specific about hours and schedule —
-                that's what parents read first.
+        <div class="empty-state">
+            <span class="hirely-mark hirely-mark--lg" aria-hidden="true">H</span>
+            <h5>Your first role is one step away.</h5>
+            <p>
+                About 5 minutes to post. Be specific about hours and schedule —
+                that's the bit parents read first.
             </p>
-            <p class="text-muted small mb-4">
-                Roles with clear schedules and remote options fill fastest.
-            </p>
-            <a href="{% url 'post_job' %}" class="btn btn-primary btn-lg px-5">Post a Role</a>
+            <a href="{% url 'post_job' %}" class="btn btn-primary btn-lg px-5">Post a role</a>
         </div>
     {% endif %}
 

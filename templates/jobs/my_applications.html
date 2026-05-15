@@ -93,13 +93,11 @@
 
     {% else %}
         <!-- Empty state — warm, not clinical -->
-        <div class="text-center py-5">
-            <div style="font-size:2.8rem; line-height:1;">📋</div>
-            <h5 class="fw-bold mt-3 mb-1">Nothing here yet</h5>
-            <p class="text-quiet" style="max-width:300px; margin:0 auto;">
-                Find something that fits and apply — it takes about a minute.
-            </p>
-            <a href="{% url 'job_list' %}" class="btn btn-primary mt-3 px-4">Find a Role</a>
+        <div class="empty-state">
+            <span class="hirely-mark hirely-mark--lg" aria-hidden="true">H</span>
+            <h5>Nothing here yet — and that's okay.</h5>
+            <p>Find a role that fits around your week. Most applications take under a minute.</p>
+            <a href="{% url 'job_list' %}" class="btn btn-primary px-4">Find a role</a>
         </div>
     {% endif %}
 

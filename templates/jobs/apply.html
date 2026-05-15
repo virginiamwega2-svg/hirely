@@ -117,6 +117,10 @@
                 const previous = draftLabel.textContent;
                 draftLabel.textContent = 'Drafting…';
 
+                // Pulse the textarea to signal AI is writing.
+                textarea.classList.add('note-textarea--loading');
+                textarea.setAttribute('readonly', 'readonly');
+
                 try {
                   const resp = await fetch("{% url 'draft_application_note' job.pk %}", {
                     method: 'POST',
@@ -145,6 +149,8 @@
                   setTimeout(() => { draftLabel.textContent = previous; }, 2000);
                 } finally {
                   draftBtn.disabled = false;
+                  textarea.classList.remove('note-textarea--loading');
+                  textarea.removeAttribute('readonly');
                 }
               });
             })();
@@ -199,6 +205,12 @@
               border-radius: 10px;
               font-size: .92rem;
               resize: vertical;
+            }
+            .note-textarea--loading {
+              background: linear-gradient(90deg,#eef2ff 0%, #f8fafc 50%, #eef2ff 100%);
+              background-size: 200% 100%;
+              animation: skeleton-shimmer 1.4s ease-in-out infinite;
+              color: transparent;
             }
             .note-actions {
               display: flex;
