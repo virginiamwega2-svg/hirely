@@ -15,8 +15,14 @@ services:
       # (points to Neon — see neon.tech project "hirely").
       - key: DATABASE_URL
         sync: false
+      # Real email delivery via Resend SMTP. Set EMAIL_HOST_PASSWORD
+      # to your Resend API key in the Render dashboard.
       - key: EMAIL_BACKEND
-        value: django.core.mail.backends.console.EmailBackend
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: Hirely <onboarding@resend.dev>
       - key: PYTHON_VERSION
         value: "3.12.0"
       # Powers the "Talk to Hirely" chat agent + AI drafted notes + weekly digest.
@@ -40,8 +46,14 @@ services:
         value: hirely.onrender.com
       - key: DATABASE_URL
         sync: false
+      # Real email delivery via Resend SMTP. Set EMAIL_HOST_PASSWORD
+      # to your Resend API key in the Render dashboard.
       - key: EMAIL_BACKEND
-        value: django.core.mail.backends.console.EmailBackend
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: Hirely <onboarding@resend.dev>
       - key: PYTHON_VERSION
         value: "3.12.0"
       - key: ANTHROPIC_API_KEY
@@ -63,8 +75,14 @@ services:
         value: hirely.onrender.com
       - key: DATABASE_URL
         sync: false
+      # Real email delivery via Resend SMTP. Set EMAIL_HOST_PASSWORD
+      # to your Resend API key in the Render dashboard.
       - key: EMAIL_BACKEND
-        value: django.core.mail.backends.console.EmailBackend
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: Hirely <onboarding@resend.dev>
       - key: PYTHON_VERSION
         value: "3.12.0"
       - key: ANTHROPIC_API_KEY
