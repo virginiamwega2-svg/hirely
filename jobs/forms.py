@@ -69,7 +69,7 @@ class JobForm(forms.ModelForm):
             'location':      'City, region, or leave blank for remote-only roles.',
             'schedule_type': 'Choose the pattern that best describes when this role is worked.',
             'is_remote':     'Tick if the parent can work from home — even part of the time.',
-            'salary':        'e.g. "£15/hr", "£25,000 pro-rata". Be transparent — parents budget carefully.',
+            'salary':        'e.g. "$15/hr", "€18/hr", "₹30,000/month". Be transparent — parents budget carefully.',
         }
         widgets = {
             'description':  forms.Textarea(attrs={'rows': 5}),

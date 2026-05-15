@@ -60,7 +60,7 @@ class Job(models.Model):
         max_length=100,
         blank=True,
         verbose_name='Pay Rate',
-        help_text='e.g. "£15/hr", "£25,000 pro-rata". Leave blank if negotiable.',
+        help_text='e.g. "$15/hr", "€18/hr", "₹30,000/month". Leave blank if negotiable.',
     )
 
     # ── Ownership & lifecycle ────────────────────────────────────────
