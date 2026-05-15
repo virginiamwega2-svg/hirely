@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}About Hirely — Flexible jobs for busy parents{% endblock %}
+{% block meta_description %}Hirely is a job board built around school runs, naps, and real life. Every role is flexible by design.{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:760px;">
+
+    <div class="text-center pt-5 pb-3">
+        <span class="hirely-mark hirely-mark--lg" aria-hidden="true">H</span>
+        <h1 class="fw-bold mt-3 mb-2" style="font-size:clamp(1.8rem,4vw,2.4rem);">
+            A job board that fits around your week.
+        </h1>
+        <p class="text-quiet" style="font-size:1.05rem; max-width:540px; margin:0 auto;">
+            Hirely was built for one kind of person: a parent looking for work that
+            actually fits the life they're already living. Mornings, term-time,
+            remote, async — that's the whole point, not a filter.
+        </p>
+    </div>
+
+    <!-- 3-step explainer ─────────────────────────────────────────── -->
+    <div class="row g-3 mt-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 p-4">
+                <div class="schedule-icon mb-3" style="background:var(--primary-50, #ecfdf5);">
+                    <span style="color:var(--primary); font-weight:800; font-size:1.1rem;">1</span>
+                </div>
+                <h6 class="fw-bold mb-2">Tell Hirely about your week.</h6>
+                <p class="text-quiet small mb-0">
+                    Mornings only? Around school runs? Remote? Just type it — no filters
+                    to wrangle, no checkboxes that don't fit your life.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4">
+                <div class="schedule-icon mb-3" style="background:var(--primary-50, #ecfdf5);">
+                    <span style="color:var(--primary); font-weight:800; font-size:1.1rem;">2</span>
+                </div>
+                <h6 class="fw-bold mb-2">Talk through any role.</h6>
+                <p class="text-quiet small mb-0">
+                    Click a role and ask anything: "Does this work with term-time?",
+                    "What would my week look like?", "Any red flags?". Honest answers,
+                    grounded in the listing — not hype.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4">
+                <div class="schedule-icon mb-3" style="background:var(--primary-50, #ecfdf5);">
+                    <span style="color:var(--primary); font-weight:800; font-size:1.1rem;">3</span>
+                </div>
+                <h6 class="fw-bold mb-2">Apply in under a minute.</h6>
+                <p class="text-quiet small mb-0">
+                    No cover letter required. Optional 2-sentence note if you want one
+                    (Hirely can help). Your CV powers smarter matches for next time.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Why we built it ──────────────────────────────────────────── -->
+    <div class="card p-4 p-md-5 mb-4">
+        <h3 class="fw-bold mb-3" style="font-size:1.3rem;">Why we built Hirely</h3>
+        <p style="line-height:1.7;">
+            Most job boards treat "flexible" as a checkbox someone forgot to update.
+            You filter for "remote", then half the roles still want you in three days a
+            week. You filter for "part-time", and the salary is buried in a PDF.
+        </p>
+        <p style="line-height:1.7; margin-bottom:0;">
+            Hirely flips it: <strong>every role is flexible by design</strong>. Employers
+            have to tell us when the work happens, how many hours a day, and whether it
+            can be done from home — before the listing goes live. Parents see the same
+            facts on every card. That's it. That's the product.
+        </p>
+    </div>
+
+    <!-- FAQ ──────────────────────────────────────────────────────── -->
+    <h3 class="fw-bold mb-3 mt-5" style="font-size:1.3rem;">Common questions</h3>
+    <div class="card p-2 p-md-3">
+        <details class="faq-item">
+            <summary>Is Hirely free for parents?</summary>
+            <p>Yes — fully free to browse, apply, and use the chat. We don't charge parents,
+            and we don't sell CV data to advertisers.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Do you screen employers?</summary>
+            <p>Employers create their own accounts and post their own roles. We don't run
+            background checks. Use the same judgement you'd use anywhere else: check the
+            company online before sharing personal info, and never pay an employer to apply.</p>
+        </details>
+        <details class="faq-item">
+            <summary>What does "flexible" actually mean here?</summary>
+            <p>Three concrete patterns: <strong>Fixed schedule</strong> (employer sets specific days
+            and hours), <strong>Flexible hours</strong> (total hours agreed, you choose when),
+            and <strong>Async</strong> (no required hours at all). Every role wears one of these
+            labels — no guessing.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Will my CV be shared with anyone?</summary>
+            <p>Only the employer of a role you've applied to. We don't sell CVs, share them
+            across employers, or pass them to recruiters. The structured summary Hirely
+            extracts from your CV is used only to improve your own matches.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Does Hirely use AI?</summary>
+            <p>Yes — the chat assistant, job matching, application notes, and interview prep
+            are all powered by AI. The AI only sees the job listing and (where relevant)
+            your own CV. It never invents details that aren't in the listing, and it never
+            sends your data anywhere except to generate your response.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Who is Hirely for?</summary>
+            <p>Parents and primary carers looking for work that fits around the rest of their
+            life. Returners after a career break, freelancers wanting steady part-time
+            work, anyone whose week doesn't fit a 9-to-5 mould.</p>
+        </details>
+    </div>
+
+    <!-- CTA ──────────────────────────────────────────────────────── -->
+    <div class="text-center py-5">
+        {% if user.is_authenticated %}
+            <a href="{% url 'job_list' %}" class="btn btn-primary btn-lg px-5">Find your fit</a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5">Get started — free</a>
+            <p class="text-quiet small mt-2 mb-0">No commitment. Takes about a minute.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<style>
+.faq-item {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 8px;
+}
+.faq-item:last-child { border-bottom: none; }
+.faq-item summary {
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    color: var(--text);
+    font-size: .98rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+    content: '+';
+    color: var(--primary);
+    font-size: 1.4rem;
+    line-height: 1;
+    font-weight: 400;
+    margin-left: 12px;
+    transition: transform .2s;
+}
+.faq-item[open] summary::after { transform: rotate(45deg); }
+.faq-item p {
+    color: var(--muted);
+    margin: 10px 0 0;
+    font-size: .92rem;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}

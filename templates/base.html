@@ -496,10 +496,11 @@
                         <li class="mb-1"><a href="{% url 'job_list' %}?schedule_type=anytime">Async jobs</a></li>
                         <li class="mb-1"><a href="{% url 'job_list' %}?remote_only=1">Remote only</a></li>
                         {% if user.is_authenticated %}
-                        <li><a href="{% url 'my_applications' %}">My applications</a></li>
+                        <li class="mb-1"><a href="{% url 'my_applications' %}">My applications</a></li>
                         {% else %}
-                        <li><a href="{% url 'register' %}">Create account</a></li>
+                        <li class="mb-1"><a href="{% url 'register' %}">Create account</a></li>
                         {% endif %}
+                        <li><a href="{% url 'about' %}">How it works</a></li>
                     </ul>
                 </div>
                 <div class="col-6 col-md-3">

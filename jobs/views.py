@@ -20,6 +20,10 @@ from .forms import RegisterForm, JobForm, ApplicationForm
 logger = logging.getLogger(__name__)
 
 
+def about(request):
+    return render(request, 'jobs/about.html')
+
+
 def og_image(request):
     """Serve the static OG share image at a root path so social
     crawlers don't have to follow /static/ redirects."""
