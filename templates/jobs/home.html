@@ -30,9 +30,7 @@
 <!-- Chat-first hero ─────────────────────────────────────────────── -->
 <section class="chat-hero">
   <div class="container" style="max-width:720px;">
-    <div class="chat-hero-avatar" aria-hidden="true">
-      <span>H</span>
-    </div>
+    <span class="hirely-mark hirely-mark--lg chat-hero-avatar" aria-hidden="true">H</span>
     <h1 class="chat-hero-title">
       Hi, I'm Hirely.
     </h1>
@@ -209,18 +207,11 @@
 }
 @media (max-width: 600px) { .chat-hero { padding: 48px 14px 40px; } }
 
+/* Hero avatar reuses .hirely-mark from base.html for brand cohesion. */
 .chat-hero-avatar {
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg,#3b6ff0,#30b8df);
-  color: white;
-  font-weight: 700;
-  font-size: 1.4rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   margin-bottom: 16px;
   box-shadow: 0 6px 20px rgba(59,111,240,.25);
+  vertical-align: middle;
 }
 
 .chat-hero-title {

@@ -7,10 +7,13 @@
 
     <div class="d-flex justify-content-between align-items-center pt-4 mb-4 flex-wrap gap-2">
         <div>
-            <h2 class="fw-bold mb-1">My Jobs</h2>
-            <p class="text-quiet mb-0" style="font-size:.9rem;">Your applications, most recent first.</p>
+            <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="hirely-mark hirely-mark--sm" aria-hidden="true">H</span>
+                Your applications
+            </h2>
+            <p class="text-quiet mb-0" style="font-size:.9rem;">Most recent first — we'll keep an eye out for updates.</p>
         </div>
-        <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm">Find More Roles</a>
+        <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm">Find more roles</a>
     </div>
 
     {% if applications %}
