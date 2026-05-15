@@ -18,5 +18,6 @@ urlpatterns = [
     path('dashboard/delete/<int:pk>/', views.delete_job, name='delete_job'),
     path('dashboard/applications/<int:pk>/', views.job_applications, name='job_applications'),
     path('dashboard/applications/<int:pk>/status/', views.update_application_status, name='update_application_status'),
+    path('dashboard/applications/<int:pk>/summarise/', views.summarise_application, name='summarise_application'),
     path('dashboard/toggle/<int:pk>/', views.toggle_job_active, name='toggle_job_active'),
 ]

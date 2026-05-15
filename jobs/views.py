@@ -553,6 +553,109 @@ def draft_application_note(request, pk):
     return JsonResponse({'note': note[:400]})
 
 
+# ─────────────────────────────────────────────────────────────────────
+# Employer auto-screening — 1-line AI summary + suggested action
+# (shortlist / hold / decline) per application. Cached on the model.
+# ─────────────────────────────────────────────────────────────────────
+
+SCREEN_SYSTEM_PROMPT = """You help an employer triage applications on Hirely — a job board for parents.
+
+Output STRICT JSON only. No prose around it. Shape:
+{"summary": "<one line>", "suggestion": "shortlist|hold|decline"}
+
+Rules for the summary:
+- Maximum 220 characters. One sentence.
+- Focus on fit between the applicant and the role's schedule/remote/hours.
+- Use only facts present in the inputs. Never invent skills or experience.
+- If the applicant left no note and no resume, say so honestly.
+
+Rules for the suggestion:
+- "shortlist" — note clearly aligns with the role's flexibility needs.
+- "hold"      — partial fit, ambiguous, or missing information.
+- "decline"   — note actively conflicts with the role's requirements.
+- Default to "hold" when uncertain. Never be harsh.
+"""
+
+
+@login_required
+@require_POST
+def summarise_application(request, pk):
+    """POST → returns + caches a JSON summary/suggestion for one application."""
+    app = get_object_or_404(
+        Application.objects.select_related('job', 'applicant'),
+        pk=pk,
+        job__posted_by=request.user,
+    )
+
+    # If we've cached this already, return it without burning a call.
+    if app.ai_summary and app.ai_suggestion:
+        return JsonResponse({
+            'summary': app.ai_summary,
+            'suggestion': app.ai_suggestion,
+            'cached': True,
+        })
+
+    if not settings.ANTHROPIC_API_KEY:
+        return JsonResponse({
+            'summary': '',
+            'suggestion': '',
+            'error': "AI assistant isn't connected yet.",
+        }, status=200)
+
+    j = app.job
+    user_prompt = (
+        f"Role: {j.title} at {j.company}\n"
+        f"Schedule: {j.get_schedule_type_display()}"
+        f"{' · Remote' if j.is_remote else ''}"
+        f"{f' · {j.hours_per_day} hrs/day' if j.hours_per_day else ''}\n"
+        f"Role brief: {(j.description or '')[:400]}\n"
+        f"Role requirements: {(j.requirements or '')[:300]}\n\n"
+        f"Applicant: {app.applicant.email}\n"
+        f"Resume on file: {'yes' if app.resume else 'no'}\n"
+        f"Applicant note: {app.note or '(none provided)'}\n"
+    )
+
+    from anthropic import Anthropic, APIError
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    try:
+        resp = client.messages.create(
+            model=CHAT_MODEL,
+            max_tokens=250,
+            system=SCREEN_SYSTEM_PROMPT,
+            messages=[{'role': 'user', 'content': user_prompt}],
+        )
+    except APIError as e:
+        logger.warning('summarise_application API error: %s', e)
+        msg = str(getattr(e, 'message', '') or e)
+        friendly = (
+            "AI is resting — the site needs to top up Anthropic credits."
+            if 'credit balance' in msg.lower()
+            else "Couldn't summarise right now — try again in a moment."
+        )
+        return JsonResponse({'summary': '', 'suggestion': '', 'error': friendly}, status=200)
+
+    raw = ''.join(b.text for b in resp.content if getattr(b, 'type', None) == 'text').strip()
+    # Be lenient with stray fences.
+    if raw.startswith('```'):
+        raw = raw.strip('`').lstrip('json').strip()
+    try:
+        data = json.loads(raw)
+        summary = str(data.get('summary', ''))[:400]
+        suggestion = data.get('suggestion', '')
+        if suggestion not in {'shortlist', 'hold', 'decline'}:
+            suggestion = 'hold'
+    except (json.JSONDecodeError, AttributeError):
+        logger.warning('summarise_application bad JSON: %r', raw)
+        summary, suggestion = raw[:400], 'hold'
+
+    app.ai_summary = summary
+    app.ai_suggestion = suggestion
+    app.save(update_fields=['ai_summary', 'ai_suggestion'])
+
+    return JsonResponse({'summary': summary, 'suggestion': suggestion, 'cached': False})
+
+
 @login_required
 def update_application_status(request, pk):
     app = get_object_or_404(Application, pk=pk, job__posted_by=request.user)

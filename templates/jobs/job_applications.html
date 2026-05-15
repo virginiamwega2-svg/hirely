@@ -14,12 +14,12 @@
     </div>
 
     {% if page_obj %}
-        <div class="row g-3">
+        <div class="row g-3" id="appList">
             {% for app in page_obj %}
             <div class="col-12">
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0" data-app-id="{{ app.pk }}">
                     <div class="card-body p-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
-                        <div>
+                        <div class="flex-grow-1">
                             <h5 class="fw-semibold mb-1">
                                 <a href="mailto:{{ app.applicant.email }}" class="text-decoration-none" style="color:var(--text);">
                                     {{ app.applicant.email }}
@@ -28,6 +28,25 @@
                             <small class="text-muted d-block mb-2">
                                 <i class="bi bi-clock"></i> Applied {{ app.applied_at|timesince }} ago
                             </small>
+
+                            <!-- AI summary slot — populated server-side if cached, else on click -->
+                            <div class="ai-summary mb-2" data-ai-slot>
+                                {% if app.ai_summary %}
+                                    <div class="ai-summary-line">
+                                        <i class="bi bi-stars"></i>
+                                        <span class="ai-summary-text">{{ app.ai_summary }}</span>
+                                        <span class="ai-suggestion ai-{{ app.ai_suggestion }}">
+                                            {{ app.get_ai_suggestion_display }}
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary ai-trigger">
+                                        <i class="bi bi-stars"></i>
+                                        <span class="ai-label">Suggest action</span>
+                                    </button>
+                                {% endif %}
+                            </div>
+
                             {% if app.note %}
                                 <blockquote class="mt-1 mb-2 ps-3"
                                             style="border-left:3px solid #3b6ff0; font-size:.92rem; color:var(--text); line-height:1.5;">
@@ -84,4 +103,93 @@
     {% endif %}
 
 </div>
+
+<style>
+.ai-summary-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: .9rem;
+  background: linear-gradient(90deg, #f5f7ff 0%, #f0fdf4 120%);
+  border: 1px solid #e1e8ff;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.ai-summary-line > i.bi-stars { color: #6366f1; }
+.ai-summary-text { flex: 1; min-width: 200px; color: #0f172a; line-height: 1.45; }
+.ai-suggestion {
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.ai-shortlist { background: #dcfce7; color: #15803d; }
+.ai-hold      { background: #fef3c7; color: #b45309; }
+.ai-decline   { background: #fee2e2; color: #b91c1c; }
+.ai-trigger i { color: #6366f1; }
+</style>
+
+<script>
+(function () {
+  const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+  if (!csrf) return;
+
+  const list = document.getElementById('appList');
+  if (!list) return;
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  const labels = { shortlist: 'Shortlist', hold: 'Hold', decline: 'Decline' };
+
+  function render(slot, summary, suggestion) {
+    const sugKey = labels[suggestion] ? suggestion : 'hold';
+    slot.innerHTML = `
+      <div class="ai-summary-line">
+        <i class="bi bi-stars"></i>
+        <span class="ai-summary-text">${escapeHtml(summary)}</span>
+        <span class="ai-suggestion ai-${sugKey}">${labels[sugKey]}</span>
+      </div>`;
+  }
+
+  list.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.ai-trigger');
+    if (!btn) return;
+
+    const card = btn.closest('[data-app-id]');
+    const slot = btn.closest('[data-ai-slot]');
+    const appId = card?.dataset.appId;
+    if (!appId) return;
+
+    const label = btn.querySelector('.ai-label');
+    const prev = label.textContent;
+    btn.disabled = true;
+    label.textContent = 'Thinking…';
+
+    try {
+      const resp = await fetch(`/dashboard/applications/${appId}/summarise/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/json' },
+      });
+      const data = await resp.json();
+      if (data.summary) {
+        render(slot, data.summary, data.suggestion);
+      } else {
+        label.textContent = data.error || 'Try again';
+        setTimeout(() => { label.textContent = prev; btn.disabled = false; }, 2500);
+      }
+    } catch {
+      label.textContent = 'Try again';
+      setTimeout(() => { label.textContent = prev; btn.disabled = false; }, 2000);
+    }
+  });
+})();
+</script>
 {% endblock %}

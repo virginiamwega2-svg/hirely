@@ -128,6 +128,12 @@ class Application(models.Model):
         ('rejected', 'Rejected'),
     ]
 
+    SUGGESTION_CHOICES = [
+        ('shortlist', 'Shortlist'),
+        ('hold',      'Hold'),
+        ('decline',   'Decline'),
+    ]
+
     job       = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
     applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
     resume    = models.FileField(upload_to='resumes/', blank=True, null=True)
@@ -139,6 +145,10 @@ class Application(models.Model):
     )
     status    = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True)
+
+    # AI-generated, cached so each summary costs at most one call.
+    ai_summary    = models.CharField(max_length=400, blank=True)
+    ai_suggestion = models.CharField(max_length=20, blank=True, choices=SUGGESTION_CHOICES)
 
     class Meta:
         ordering = ['-applied_at']
