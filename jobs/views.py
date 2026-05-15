@@ -904,11 +904,98 @@ def update_application_status(request, pk):
     app = get_object_or_404(Application, pk=pk, job__posted_by=request.user)
     if request.method == 'POST':
         status = request.POST.get('status')
-        if status in dict(Application.STATUS_CHOICES):
+        if status in dict(Application.STATUS_CHOICES) and status != app.status:
+            previous_status = app.status
             app.status = status
             app.save()
+
+            # Notify the parent with a warm AI-drafted email when the
+            # decision is meaningful (accepted / rejected). "seen" auto-
+            # transitions don't warrant an email — that would feel spammy.
+            if status in {'accepted', 'rejected'} and app.applicant.email:
+                try:
+                    _send_status_change_email(app, previous_status, request)
+                except Exception:
+                    logger.exception('status change email failed')
+
     page = request.POST.get('page', '')
     url = reverse('job_applications', args=[app.job.pk])
     if page:
         url += f'?page={page}'
     return redirect(url)
+
+
+STATUS_EMAIL_SYSTEM_PROMPT = """You write a short, warm email from Hirely to a parent whose job application has just received a decision.
+
+Rules:
+- Output ONLY the email body. No subject line, no headers, no "Dear", no sign-off (we'll add "— Hirely" ourselves).
+- 2–4 short sentences. Plain English. Never corporate.
+- If accepted: be genuinely warm but not over the top. Tell them the next step is the employer reaching out directly. Wish them luck.
+- If rejected: be kind and direct. Acknowledge it stings. Validate that fit-matters and this one wasn't it. Suggest they keep looking with one specific, gentle nudge.
+- Never invent feedback the employer didn't give. Never speculate on the employer's reasons.
+- Never apologise for being a parent or for needing flexibility.
+"""
+
+
+def _send_status_change_email(app, previous_status, request):
+    """Send a parent-friendly AI-drafted email when an application moves to
+    accepted or rejected. Falls back to a plain template if AI is unavailable."""
+    job = app.job
+    role_line = f"{job.title} at {job.company}"
+    is_accepted = app.status == 'accepted'
+
+    body = ''
+    if settings.ANTHROPIC_API_KEY:
+        try:
+            from anthropic import Anthropic, APIError
+            client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+            user_prompt = (
+                f"Role: {role_line}\n"
+                f"Schedule: {job.get_schedule_type_display()}"
+                f"{' · Remote' if job.is_remote else ''}"
+                f"{f' · {job.hours_per_day} hrs/day' if job.hours_per_day else ''}\n"
+                f"Pay: {job.salary or 'not specified'}\n"
+                f"Parent's optional note on the application: {app.note or '(none)'}\n"
+                f"New status: {'ACCEPTED' if is_accepted else 'REJECTED / not selected'}\n"
+                f"\nWrite the email body now."
+            )
+            resp = client.messages.create(
+                model=CHAT_MODEL,
+                max_tokens=300,
+                system=STATUS_EMAIL_SYSTEM_PROMPT,
+                messages=[{'role': 'user', 'content': user_prompt}],
+            )
+            body = ''.join(
+                b.text for b in resp.content if getattr(b, 'type', None) == 'text'
+            ).strip()
+        except APIError:
+            logger.warning('status email: Anthropic call failed', exc_info=True)
+
+    if not body:
+        # Fallback when AI is off or fails — still better than silence.
+        if is_accepted:
+            body = (
+                f"Great news on your application for {role_line} — the employer "
+                f"would like to take things further. They'll be in touch with you "
+                f"directly using the email you signed up with. Best of luck!"
+            )
+        else:
+            body = (
+                f"An update on your application for {role_line}: this one wasn't "
+                f"the right fit on the employer's side. It says nothing about you — "
+                f"fit is a two-way thing. Plenty of other flexible roles to explore "
+                f"when you're ready."
+            )
+
+    subject = (
+        f"Good news on {role_line}" if is_accepted
+        else f"An update on {role_line}"
+    )
+    applicant_url = request.build_absolute_uri(reverse('my_applications'))
+    send_mail(
+        subject=subject,
+        message=f"Hi,\n\n{body}\n\nTrack all your applications:\n{applicant_url}\n\n— Hirely",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[app.applicant.email],
+        fail_silently=True,
+    )
