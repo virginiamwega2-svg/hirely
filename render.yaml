@@ -46,3 +46,26 @@ services:
         value: "3.12.0"
       - key: ANTHROPIC_API_KEY
         sync: false
+
+  # Weekly stale-job nudge — Sundays 18:00 UTC.
+  - type: cron
+    name: hirely-stale-job-nudge
+    runtime: python
+    schedule: "0 18 * * 0"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py nudge_stale_jobs
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: hirely.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.console.EmailBackend
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: ANTHROPIC_API_KEY
+        sync: false
