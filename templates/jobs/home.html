@@ -7,7 +7,7 @@
 
 {% if user.is_authenticated %}
 <!-- Returning user — greeting, not a sales pitch ────────────────── -->
-<div class="border-bottom mb-5" style="background:var(--card-bg);">
+<div class="border-bottom" style="background:var(--card-bg);">
     <div class="container py-4" style="max-width:860px;">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
@@ -26,6 +26,68 @@
         </div>
     </div>
 </div>
+
+{% if top_matches %}
+<!-- Personalised matches — built from the parent's parsed CV ─── -->
+<div class="container py-4 mb-2" style="max-width:860px;">
+    <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="hirely-mark hirely-mark--sm" aria-hidden="true">H</span>
+        <h5 class="fw-bold mb-0">Top matches for you</h5>
+    </div>
+    <p class="text-quiet small mb-3">
+        Hand-picked from your CV. The "why" is Hirely's, not the employer's.
+    </p>
+    <div class="row g-3">
+        {% for job in top_matches %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'job_detail' job.pk %}" class="text-decoration-none">
+                <div class="card job-card h-100 p-3 match-card">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div class="co-avatar" style="width:32px;height:32px;font-size:.85rem;">{{ job.company|first }}</div>
+                        <span class="fw-semibold flex-grow-1" style="color:var(--text); font-size:.95rem;">{{ job.title }}</span>
+                    </div>
+                    <div class="text-quiet mb-2" style="font-size:.8rem;">
+                        {{ job.company }}{% if job.location %} · {{ job.location }}{% endif %}
+                    </div>
+                    <p class="match-why mb-2">
+                        <i class="bi bi-stars" aria-hidden="true"></i>
+                        {{ job.match_reason }}
+                    </p>
+                    <div class="d-flex flex-wrap gap-1 mt-auto">
+                        <span class="badge" style="background:#f0f4ff; color:#2563eb;">
+                            {{ job.get_schedule_type_display }}
+                        </span>
+                        {% if job.is_remote %}
+                            <span class="badge" style="background:#f0fdf4; color:#16a34a;">Remote</span>
+                        {% endif %}
+                        {% if job.hours_per_day %}
+                            <span class="badge bg-light text-dark border">{{ job.hours_per_day }} hrs/day</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<style>
+.match-card { border-color: #dbe4ff; }
+.match-card:hover { border-color: #3b6ff0; }
+.match-why {
+    font-size: .85rem;
+    line-height: 1.5;
+    color: var(--text);
+    background: linear-gradient(90deg, #f5f7ff 0%, #f0fdf4 120%);
+    border: 1px solid #e1e8ff;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin: 0;
+}
+.match-why i.bi-stars { color: #6366f1; margin-right: 4px; }
+</style>
+{% endif %}
+
+<div class="mb-5"></div>
 {% else %}
 <!-- Chat-first hero ─────────────────────────────────────────────── -->
 <section class="chat-hero">

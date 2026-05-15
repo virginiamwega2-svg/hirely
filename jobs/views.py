@@ -36,10 +36,19 @@ def home(request):
         row['schedule_type']: row['count']
         for row in active_jobs.values('schedule_type').annotate(count=Count('id'))
     }
+
+    top_matches = []
+    if request.user.is_authenticated:
+        try:
+            top_matches = _get_top_matches(request.user, limit=3)
+        except Exception:
+            logger.exception('home: top_matches failed')
+
     return render(request, 'jobs/home.html', {
         'jobs': featured_jobs,
         'total_jobs': total_jobs,
         'type_counts': type_counts,
+        'top_matches': top_matches,
     })
 
 
@@ -311,6 +320,136 @@ def toggle_job_active(request, pk):
 # ─────────────────────────────────────────────────────────────────────
 
 CHAT_MODEL = 'claude-haiku-4-5-20251001'  # fast + cheap, plenty for this task
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Job matching — LLM-scored "Top matches for you" using the parent's
+# parsed CV profile. Result cached per (user, profile.parsed_at) so we
+# don't pay per page view.
+# ─────────────────────────────────────────────────────────────────────
+
+MATCH_SYSTEM_PROMPT = """You match a parent to flexible job listings on Hirely.
+
+Output STRICT JSON ONLY — no prose, no fences. Shape:
+{"matches": [
+  {"id": <job_id>, "why": "<1 short sentence on the specific fit>"},
+  ...
+]}
+
+Rules:
+- Pick at most THREE jobs from the candidates list, in order of best fit.
+- "Best fit" means alignment between the parent's profile and the role's schedule, hours, remote-ness, and skills.
+- The "why" must reference something concrete from BOTH the profile and the role (e.g. "Matches your mornings-only preference and uses your spreadsheet skills"). Never generic.
+- If NONE of the candidates are a real fit, return {"matches": []}. Do not stretch.
+- Never invent jobs not in the candidates list.
+"""
+
+
+def _get_top_matches(user, limit=3):
+    """Return up to `limit` Jobs with `.match_reason` attached, or []."""
+    from django.core.cache import cache
+    profile = getattr(user, 'parent_profile', None)
+    if not profile or profile.parse_failed:
+        return []
+    if not settings.ANTHROPIC_API_KEY:
+        return []
+
+    cache_key = f'parent_matches:{user.id}:{int(profile.parsed_at.timestamp())}'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        # Re-fetch fresh Job rows but keep the cached reasons.
+        ids = [m['id'] for m in cached]
+        jobs_by_id = Job.objects.in_bulk(ids)
+        out = []
+        for m in cached:
+            j = jobs_by_id.get(m['id'])
+            if j and j.is_active:
+                j.match_reason = m['why']
+                out.append(j)
+        return out
+
+    # Candidate pool: recent active roles the parent hasn't applied to.
+    candidates = list(
+        Job.objects
+        .filter(is_active=True)
+        .exclude(applications__applicant=user)
+        .order_by('-created_at')[:20]
+    )
+    if not candidates:
+        cache.set(cache_key, [], 600)
+        return []
+
+    profile_text = (
+        f"Summary: {profile.summary or '(none)'}\n"
+        f"Years experience: {profile.years_experience or 0}\n"
+        f"Top skills: {profile.top_skills or '(none)'}\n"
+        f"Location: {profile.location_hint or '(unknown)'}\n"
+        f"Schedule hint: {profile.schedule_preference or '(none)'}\n"
+    )
+
+    candidates_payload = [
+        {
+            'id': j.id,
+            'title': j.title,
+            'company': j.company,
+            'schedule_type': j.get_schedule_type_display(),
+            'is_remote': j.is_remote,
+            'hours_per_day': j.hours_per_day,
+            'location': j.location,
+            'salary': j.salary,
+            'description': (j.description or '')[:240],
+        }
+        for j in candidates
+    ]
+
+    user_prompt = (
+        f"Parent profile:\n{profile_text}\n\n"
+        f"Candidate roles (JSON):\n{json.dumps(candidates_payload)}\n\n"
+        f"Return the JSON object now."
+    )
+
+    from anthropic import Anthropic, APIError
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    try:
+        resp = client.messages.create(
+            model=CHAT_MODEL,
+            max_tokens=500,
+            system=MATCH_SYSTEM_PROMPT,
+            messages=[{'role': 'user', 'content': user_prompt}],
+        )
+    except APIError as e:
+        logger.warning('top_matches API error: %s', e)
+        return []
+
+    raw = ''.join(b.text for b in resp.content if getattr(b, 'type', None) == 'text').strip()
+    if raw.startswith('```'):
+        raw = raw.strip('`').lstrip('json').strip()
+
+    try:
+        data = json.loads(raw)
+        matches = data.get('matches', [])[:limit]
+    except (json.JSONDecodeError, AttributeError):
+        logger.warning('top_matches bad JSON: %r', raw[:200])
+        matches = []
+
+    # Validate ids and clip reasons.
+    valid_ids = {c['id'] for c in candidates_payload}
+    clean = [
+        {'id': m['id'], 'why': str(m.get('why', ''))[:200]}
+        for m in matches
+        if isinstance(m, dict) and m.get('id') in valid_ids
+    ]
+    cache.set(cache_key, clean, 3600)
+
+    jobs_by_id = {j.id: j for j in candidates}
+    out = []
+    for m in clean:
+        j = jobs_by_id.get(m['id'])
+        if j:
+            j.match_reason = m['why']
+            out.append(j)
+    return out
 
 SEARCH_JOBS_TOOL = {
     'name': 'search_jobs',
