@@ -3,6 +3,8 @@ dj-database-url==3.1.2
 crispy-bootstrap5==2026.3
 anthropic==0.40.0
 Django==6.0.3
+pdfminer.six==20231228
+python-docx==1.1.2
 django-allauth==65.15.0
 django-crispy-forms==2.6
 gunicorn==25.3.0

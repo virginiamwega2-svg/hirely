@@ -13,6 +13,7 @@ urlpatterns = [
     path('jobs/<int:pk>/apply/', views.apply, name='apply'),
     path('jobs/<int:pk>/draft-note/', views.draft_application_note, name='draft_application_note'),
     path('my-applications/', views.my_applications, name='my_applications'),
+    path('me/', views.parent_profile, name='parent_profile'),
     path('dashboard/', views.employer_dashboard, name='employer_dashboard'),
     path('dashboard/post/', views.post_job, name='post_job'),
     path('dashboard/edit/<int:pk>/', views.edit_job, name='edit_job'),

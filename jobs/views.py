@@ -1,3 +1,6 @@
+import json
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
@@ -10,8 +13,19 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 from .models import Job, Application
 from .forms import RegisterForm, JobForm, ApplicationForm
+
+logger = logging.getLogger(__name__)
+
+
+@login_required
+def parent_profile(request):
+    """Show the parent the structured profile we extracted from their CV."""
+    from .models import ParentProfile
+    profile = ParentProfile.objects.filter(user=request.user).first()
+    return render(request, 'jobs/parent_profile.html', {'profile': profile})
 
 
 def home(request):
@@ -153,6 +167,15 @@ def apply(request, pk):
             application.applicant = request.user
             application.save()
 
+            # Parse the resume into a structured ParentProfile. Best-effort —
+            # never blocks the application from being submitted.
+            if application.resume:
+                try:
+                    from .resume_parser import parse_and_save
+                    parse_and_save(request.user, application.resume)
+                except Exception:
+                    logger.exception('resume parse hook failed; ignoring')
+
             employer_url = request.build_absolute_uri(
                 reverse('job_applications', args=[job.pk])
             )
@@ -280,12 +303,6 @@ def toggle_job_active(request, pk):
 # "Talk to Hirely" — conversational agent powered by Claude with a
 # search_jobs tool grounded in our own Job table.
 # ─────────────────────────────────────────────────────────────────────
-
-import json
-import logging
-from django.views.decorators.http import require_POST
-
-logger = logging.getLogger(__name__)
 
 CHAT_MODEL = 'claude-haiku-4-5-20251001'  # fast + cheap, plenty for this task
 

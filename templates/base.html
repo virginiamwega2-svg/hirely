@@ -327,6 +327,10 @@
                                href="{% url 'my_applications' %}">My Applications</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'parent_profile' %}active fw-semibold{% endif %}"
+                               href="{% url 'parent_profile' %}">Profile</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'employer_dashboard' or request.resolver_match.url_name == 'post_job' or request.resolver_match.url_name == 'edit_job' or request.resolver_match.url_name == 'job_applications' or request.resolver_match.url_name == 'delete_job' %}active fw-semibold{% endif %}"
                                href="{% url 'employer_dashboard' %}">Post Jobs</a>
                         </li>

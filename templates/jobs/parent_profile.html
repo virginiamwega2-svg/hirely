@@ -1,56 +1,91 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}My Preferences — Hirely{% endblock %}
+{% block title %}Your Hirely profile{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:560px;">
+<div class="container" style="max-width:640px;">
 
-    <div class="pt-4 mb-4">
-        <h2 class="fw-bold mb-1">My Preferences</h2>
-        <p class="text-quiet mb-0" style="font-size:.9rem;">
-            These pre-fill your filters when browsing — save you a few taps every time.
+    <div class="pt-4 pb-2">
+        <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
+            <span class="hirely-mark hirely-mark--sm" aria-hidden="true">H</span>
+            What Hirely knows about you
+        </h2>
+        <p class="text-quiet mb-0" style="font-size:.92rem;">
+            Built from the CV you last uploaded. Used to find roles that fit your week.
         </p>
     </div>
 
-    <div class="card p-4">
-        <form method="post">
-            {% csrf_token %}
+    {% if not profile %}
+        <div class="empty-state">
+            <span class="hirely-mark hirely-mark--lg" aria-hidden="true">H</span>
+            <h5>No profile yet.</h5>
+            <p>Upload your CV when you next apply to a role and Hirely will build it for you. Takes a few seconds.</p>
+            <a href="{% url 'job_list' %}" class="btn btn-primary">Find a role</a>
+        </div>
+    {% elif profile.parse_failed %}
+        <div class="card p-4 mt-3">
+            <p class="fw-semibold mb-1">Couldn't read your last CV.</p>
+            <p class="text-quiet small mb-3">
+                The file uploaded fine for the employer, but Hirely couldn't extract clean text from it
+                — usually means it's a scanned image instead of a real PDF. Try re-saving as a PDF
+                from Word/Google Docs and applying once more.
+            </p>
+            <a href="{% url 'job_list' %}" class="btn btn-outline-primary btn-sm align-self-start">Browse roles</a>
+        </div>
+    {% else %}
+        <div class="card p-4 p-md-5 mt-3">
 
-            <div class="mb-3">
-                {{ form.preferred_schedule|as_crispy_field }}
-            </div>
-
-            <div class="mb-3">
-                {{ form.preferred_location|as_crispy_field }}
-            </div>
-
+            {% if profile.summary %}
             <div class="mb-4">
-                <div class="d-flex align-items-center gap-3 p-3 rounded border"
-                     style="background:#f9fafb;">
-                    <div class="form-check form-switch mb-0">
-                        {{ form.preferred_remote }}
-                    </div>
-                    <div>
-                        <label class="form-check-label fw-semibold"
-                               for="{{ form.preferred_remote.id_for_label }}">
-                            <i class="bi bi-laptop"></i> Remote roles only
-                        </label>
-                        <div class="text-quiet small">Only show roles you can do from home</div>
-                    </div>
+                <div class="label-sm mb-1">In a sentence</div>
+                <p class="mb-0" style="font-size:1rem; color:var(--text); line-height:1.6;">
+                    {{ profile.summary }}
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="row g-3 mb-3">
+                {% if profile.years_experience %}
+                <div class="col-6">
+                    <div class="label-sm mb-1">Experience</div>
+                    <div class="fw-semibold">{{ profile.years_experience }}+ year{{ profile.years_experience|pluralize }}</div>
+                </div>
+                {% endif %}
+                {% if profile.location_hint %}
+                <div class="col-6">
+                    <div class="label-sm mb-1">Location</div>
+                    <div class="fw-semibold">{{ profile.location_hint }}</div>
+                </div>
+                {% endif %}
+                {% if profile.schedule_preference %}
+                <div class="col-12">
+                    <div class="label-sm mb-1">Schedule hint</div>
+                    <div class="fw-semibold">{{ profile.schedule_preference }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if profile.skill_list %}
+            <div class="mb-2">
+                <div class="label-sm mb-2">Top skills</div>
+                <div class="d-flex flex-wrap gap-1">
+                    {% for skill in profile.skill_list %}
+                        <span class="badge" style="background:#eff6ff;color:#2563eb;border-radius:999px;padding:6px 12px;font-weight:500;">
+                            {{ skill }}
+                        </span>
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Save Preferences</button>
-                <a href="{% url 'job_list' %}" class="btn btn-outline-secondary">Browse Roles</a>
-            </div>
-        </form>
-    </div>
+            <hr style="border-color:var(--border);">
 
-    <p class="text-quiet small mt-3">
-        These only pre-fill the search — you can always change filters on the job list page.
-    </p>
+            <p class="text-quiet small mb-0">
+                Updated {{ profile.parsed_at|timesince }} ago.
+                Upload a new CV on any application to refresh this.
+            </p>
+        </div>
+    {% endif %}
 
 </div>
 {% endblock %}

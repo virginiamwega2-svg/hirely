@@ -158,6 +158,40 @@ class Application(models.Model):
         return f'{self.applicant.email} → {self.job.title}'
 
 
+class ParentProfile(models.Model):
+    """
+    AI-extracted structured summary of a parent's CV.
+
+    Built automatically from the most recent uploaded resume by the
+    resume_parser. Powers job matching, smarter chat answers, and
+    better personalisation in the weekly digest.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='parent_profile')
+
+    # Plain-text extraction — keeps the source for re-runs if the prompt evolves.
+    raw_resume_text = models.TextField(blank=True)
+
+    # AI-extracted structured fields. All optional — Claude returns "" when unsure.
+    years_experience      = models.PositiveSmallIntegerField(null=True, blank=True)
+    top_skills            = models.CharField(max_length=400, blank=True,
+                                             help_text='Comma-separated, max 6.')
+    location_hint         = models.CharField(max_length=120, blank=True)
+    schedule_preference   = models.CharField(max_length=120, blank=True,
+                                             help_text='Free-text hint: "mornings", "term-time", etc.')
+    summary               = models.CharField(max_length=400, blank=True,
+                                             help_text='1–2 sentence parent-friendly bio.')
+
+    parsed_at = models.DateTimeField(auto_now=True)
+    parse_failed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'Profile for {self.user.email}'
+
+    @property
+    def skill_list(self):
+        return [s.strip() for s in self.top_skills.split(',') if s.strip()]
+
+
 class DigestLog(models.Model):
     """
     Throttle record for the weekly AI-curated job digest.
