@@ -19,3 +19,30 @@ services:
         value: django.core.mail.backends.console.EmailBackend
       - key: PYTHON_VERSION
         value: "3.12.0"
+      # Powers the "Talk to Hirely" chat agent + AI drafted notes + weekly digest.
+      # Set the value manually in the Render dashboard.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  # Weekly AI-curated digest — Mondays 09:00 UTC.
+  - type: cron
+    name: hirely-weekly-digest
+    runtime: python
+    schedule: "0 9 * * 1"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py send_job_alerts
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: hirely.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.console.EmailBackend
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: ANTHROPIC_API_KEY
+        sync: false
