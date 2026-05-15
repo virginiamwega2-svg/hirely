@@ -554,6 +554,87 @@ def draft_application_note(request, pk):
 
 
 # ─────────────────────────────────────────────────────────────────────
+# "Is this for me?" — conversational Q&A grounded in a single role.
+# Lets parents talk through a job before applying (school holidays,
+# pay sanity check, "what would my week look like" etc.).
+# ─────────────────────────────────────────────────────────────────────
+
+ASK_ABOUT_JOB_SYSTEM_PROMPT = """You are Hirely's friendly assistant helping a parent decide if a specific job fits their life.
+
+Rules:
+- Speak warmly, like a thoughtful friend. 1–3 short sentences per turn. No lists, no preamble.
+- Ground EVERY answer in the role context provided. Do NOT invent specifics about hours, pay, days, holidays, or benefits the role didn't mention.
+- If the parent asks about something the listing doesn't address (e.g. school-holiday policy, sick days, specific clients), say honestly "the listing doesn't say — worth asking the employer" and suggest one question they could send.
+- For pay-comparison questions, be cautious: if you can comment generically ("£15/hr is a common rate for admin work in the UK"), do so briefly; otherwise admit you don't have current market data.
+- Never pressure the parent to apply. End with a small, useful next step where natural.
+- Validate parent constraints (school runs, naps, term-time) as completely normal.
+"""
+
+
+@require_POST
+def ask_about_job(request, pk):
+    """POST JSON: { messages: [...] } — same shape as the homepage chat,
+    but grounded entirely in one Job. Returns { reply }."""
+    job = get_object_or_404(Job, pk=pk, is_active=True)
+
+    if not settings.ANTHROPIC_API_KEY:
+        return JsonResponse({
+            'reply': "I'm not connected to my brain yet — the site owner needs to set ANTHROPIC_API_KEY.",
+        }, status=200)
+
+    try:
+        body = json.loads(request.body or b'{}')
+        messages = body.get('messages') or []
+        if not isinstance(messages, list) or not messages:
+            return JsonResponse({'error': 'messages required'}, status=400)
+        messages = messages[-12:]
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid json'}, status=400)
+
+    job_context = (
+        f"Role: {job.title} at {job.company}\n"
+        f"Location: {job.location or 'Not specified'}"
+        f"{' (remote)' if job.is_remote else ''}\n"
+        f"Schedule: {job.get_schedule_type_display()}"
+        f"{f' · {job.hours_per_day} hrs/day' if job.hours_per_day else ''}\n"
+        f"Pay: {job.salary or 'Not specified'}\n\n"
+        f"About this role:\n{job.description or '(none)'}\n\n"
+        f"Requirements:\n{job.requirements or '(none specified)'}\n"
+    )
+
+    system_with_context = (
+        ASK_ABOUT_JOB_SYSTEM_PROMPT
+        + "\n\nROLE CONTEXT (everything you know about the job):\n"
+        + job_context
+    )
+
+    from anthropic import Anthropic, APIError
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    try:
+        resp = client.messages.create(
+            model=CHAT_MODEL,
+            max_tokens=400,
+            system=system_with_context,
+            messages=messages,
+        )
+    except APIError as e:
+        logger.warning('ask_about_job API error: %s', e)
+        msg = str(getattr(e, 'message', '') or e)
+        friendly = (
+            "I'm temporarily resting — the site needs to top up its Anthropic credits."
+            if 'credit balance' in msg.lower()
+            else "I'm having a moment — try again in a few seconds?"
+        )
+        return JsonResponse({'reply': friendly}, status=200)
+
+    reply = ''.join(
+        b.text for b in resp.content if getattr(b, 'type', None) == 'text'
+    ).strip()
+    return JsonResponse({'reply': reply})
+
+
+# ─────────────────────────────────────────────────────────────────────
 # Employer auto-screening — 1-line AI summary + suggested action
 # (shortlist / hold / decline) per application. Cached on the model.
 # ─────────────────────────────────────────────────────────────────────

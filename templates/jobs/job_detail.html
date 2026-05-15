@@ -72,6 +72,51 @@
                     {% endif %}
                 </p>
             </div>
+
+            <!-- "Is this for me?" — talk through the role with Hirely ── -->
+            <section class="ask-card card p-4 p-md-5 mt-3" id="askCard">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="hirely-mark hirely-mark--sm" aria-hidden="true">H</span>
+                    <h6 class="fw-bold mb-0">Is this for me?</h6>
+                </div>
+                <p class="text-quiet small mb-3">
+                    Talk it through with Hirely. I'll answer based only on what's in this listing —
+                    and tell you honestly when something isn't covered.
+                </p>
+
+                <div class="ask-chips" role="list">
+                    {% csrf_token %}
+                    <button type="button" class="ask-chip" data-q="Will this work around school holidays?">
+                        🎒 School holidays?
+                    </button>
+                    <button type="button" class="ask-chip" data-q="What would a typical week look like in this role?">
+                        🗓️ A typical week
+                    </button>
+                    <button type="button" class="ask-chip" data-q="Is the pay competitive for this kind of work?">
+                        💷 Pay sanity check
+                    </button>
+                    <button type="button" class="ask-chip" data-q="Any red flags for parents in this listing?">
+                        🚩 Red flags
+                    </button>
+                </div>
+
+                <div id="askThread" class="ask-thread" hidden></div>
+
+                <form id="askForm" class="ask-form mt-3" autocomplete="off">
+                    <label for="askInput" class="visually-hidden">Ask Hirely about this role</label>
+                    <div class="ask-inputwrap">
+                        <input
+                            id="askInput"
+                            type="text"
+                            class="ask-input"
+                            placeholder="Ask anything about this role…"
+                            autocomplete="off">
+                        <button type="submit" class="ask-send" aria-label="Send">
+                            <i class="bi bi-arrow-up-circle-fill" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </form>
+            </section>
         </div>
 
         <!-- Sidebar — first on mobile (order-1), right on desktop ── -->
@@ -179,5 +224,178 @@ function copyLink() {
         setTimeout(() => { btn.innerHTML = '<i class="bi bi-link-45deg"></i> Copy link'; }, 2000);
     });
 }
+</script>
+
+<style>
+.ask-card {
+    background: linear-gradient(180deg, #fafbff 0%, #ffffff 100%);
+    border: 1px solid #e1e8ff;
+}
+.ask-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.ask-chip {
+    border: 1px solid #dbe4ff;
+    background: #fff;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: .85rem;
+    color: #334155;
+    cursor: pointer;
+    min-height: 34px;
+    transition: background .15s, border-color .15s, transform .1s;
+}
+.ask-chip:hover { background: #f0f4ff; border-color: #b7c8ff; }
+.ask-chip:active { transform: scale(.97); }
+.ask-chip:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.ask-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+}
+.ask-bubble {
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: .92rem;
+    line-height: 1.5;
+    max-width: 92%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    animation: chat-pop .18s ease-out;
+}
+.ask-bubble-user {
+    background: #3b6ff0;
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+.ask-bubble-assistant {
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #e6ebf5;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+.ask-typing { display: flex; gap: 4px; padding: 12px 14px; }
+.ask-typing span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #94a3b8;
+    animation: chat-blink 1.2s infinite;
+}
+.ask-typing span:nth-child(2) { animation-delay: .2s; }
+.ask-typing span:nth-child(3) { animation-delay: .4s; }
+
+.ask-inputwrap {
+    position: relative;
+}
+.ask-input {
+    width: 100%;
+    border: 1px solid #dbe4ff;
+    background: #fff;
+    border-radius: 999px;
+    padding: 12px 50px 12px 18px;
+    font-size: .95rem;
+    transition: border-color .15s, box-shadow .15s;
+}
+.ask-input:focus {
+    outline: none;
+    border-color: #3b6ff0;
+    box-shadow: 0 4px 14px rgba(59,111,240,.18);
+}
+.ask-send {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: #3b6ff0;
+    cursor: pointer;
+    padding: 2px;
+}
+.ask-send:hover { color: #2952c8; }
+</style>
+
+<script>
+(function () {
+  const form    = document.getElementById('askForm');
+  const input   = document.getElementById('askInput');
+  const thread  = document.getElementById('askThread');
+  const chips   = document.querySelectorAll('.ask-chip');
+  const csrf    = document.querySelector('#askCard [name=csrfmiddlewaretoken]').value;
+  const history = [];
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function bubble(role, text) {
+    const div = document.createElement('div');
+    div.className = 'ask-bubble ask-bubble-' + role;
+    div.textContent = text;
+    thread.appendChild(div);
+    return div;
+  }
+
+  function typingIndicator() {
+    const div = document.createElement('div');
+    div.className = 'ask-bubble ask-bubble-assistant ask-typing';
+    div.setAttribute('aria-label', 'Hirely is thinking');
+    div.innerHTML = '<span></span><span></span><span></span>';
+    thread.appendChild(div);
+    return div;
+  }
+
+  async function send(message) {
+    if (!message.trim()) return;
+    thread.hidden = false;
+
+    bubble('user', message);
+    history.push({ role: 'user', content: message });
+
+    const typing = typingIndicator();
+    typing.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    try {
+      const resp = await fetch("{% url 'ask_about_job' job.pk %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf,
+        },
+        body: JSON.stringify({ messages: history }),
+      });
+      const data = await resp.json();
+      typing.remove();
+
+      const replyText = data.reply || "Sorry, I didn't catch that — try again?";
+      bubble('assistant', replyText);
+      history.push({ role: 'assistant', content: replyText });
+    } catch (e) {
+      typing.remove();
+      bubble('assistant', "I'm having trouble reaching the server. Try again in a moment.");
+    }
+
+    thread.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const msg = input.value;
+    input.value = '';
+    send(msg);
+  });
+
+  chips.forEach(btn => {
+    btn.addEventListener('click', () => send(btn.dataset.q));
+  });
+})();
 </script>
 {% endblock %}
