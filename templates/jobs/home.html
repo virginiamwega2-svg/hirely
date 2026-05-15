@@ -280,6 +280,7 @@
   font-size: .88rem;
   color: var(--text, #334155);
   cursor: pointer;
+  min-height: 36px;
   transition: background .15s, border-color .15s, transform .1s;
 }
 .chat-chip:hover {
@@ -287,6 +288,14 @@
   border-color: #b7c8ff;
 }
 .chat-chip:active { transform: scale(.97); }
+.chat-chip:focus-visible {
+  outline: 2px solid var(--primary, #3b6ff0);
+  outline-offset: 2px;
+}
+@media (max-width: 480px) {
+  .chat-hero-chips { gap: 6px; }
+  .chat-chip { font-size: .82rem; padding: 7px 12px; }
+}
 
 .chat-hero-escape {
   display: inline-block;

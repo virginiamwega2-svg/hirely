@@ -5,6 +5,22 @@
 {% block content %}
 <div class="container">
 
+    <style>
+    .chip-row-sticky {
+        position: sticky;
+        top: 60px;
+        z-index: 100;
+        background: var(--bg);
+        padding: 8px 0;
+        margin-top: -8px;
+    }
+    /* When the navbar collapse is open on mobile it pushes the
+       sticky chip strip down. Just disable stick on small screens. */
+    @media (max-width: 991.98px) {
+        .chip-row-sticky { position: static; padding: 0; margin-top: 0; }
+    }
+    </style>
+
     <!-- Page header -->
     <div class="py-4">
         <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
@@ -15,7 +31,7 @@
     </div>
 
     <!-- Schedule chips — sticky below navbar, scrollable on mobile ── -->
-    <div class="chip-row mb-3" style="position:sticky; top:65px; z-index:100; background:var(--bg); padding-top:8px; padding-bottom:8px; margin-top:-8px;">
+    <div class="chip-row chip-row-sticky mb-3">
         <a href="?{% if remote_only %}remote_only=1&{% endif %}{% if location %}location={{ location }}&{% endif %}{% if search %}search={{ search }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}"
            class="flex-chip btn {% if not schedule_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
             All
@@ -47,12 +63,13 @@
         </div>
 
         <!-- Row 2: location, remote, sort, actions -->
-        <div class="d-flex gap-2 align-items-center flex-wrap">
-            <div class="input-group" style="max-width:200px;">
-                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-quiet"></i></span>
+        <div class="filter-row d-flex gap-2 align-items-center flex-wrap">
+            <div class="input-group filter-location">
+                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-quiet" aria-hidden="true"></i></span>
                 <input type="text" name="location" value="{{ location }}"
                        class="form-control border-start-0"
-                       placeholder="City or region...">
+                       placeholder="City or region..."
+                       aria-label="Location">
             </div>
             <div class="form-check form-switch mb-0 ms-1">
                 <input class="form-check-input" type="checkbox" name="remote_only" value="1"
@@ -60,7 +77,8 @@
                        onchange="this.form.submit()">
                 <label class="form-check-label fw-semibold small" for="remoteToggle">Remote only</label>
             </div>
-            <select name="sort" class="form-select form-select-sm" style="max-width:150px;" onchange="this.form.submit()">
+            <select name="sort" class="form-select form-select-sm filter-sort"
+                    aria-label="Sort roles" onchange="this.form.submit()">
                 <option value="" {% if not sort %}selected{% endif %}>Newest first</option>
                 <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
                 <option value="flex" {% if sort == 'flex' %}selected{% endif %}>Most flexible</option>
@@ -71,6 +89,17 @@
             {% endif %}
         </div>
     </form>
+    <style>
+    .filter-location { max-width: 220px; }
+    .filter-sort     { max-width: 150px; }
+    @media (max-width: 575.98px) {
+        .filter-row { flex-direction: column; align-items: stretch !important; }
+        .filter-location, .filter-sort { max-width: 100%; }
+        .filter-row .btn { width: 100%; }
+        .filter-row .form-check-switch,
+        .filter-row .form-switch { padding-left: 2.5em; }
+    }
+    </style>
 
     <!-- Result count — small and quiet ──────────────────────────── -->
     <p class="text-quiet mb-3" style="font-size:.85rem;">
