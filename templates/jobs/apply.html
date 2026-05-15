@@ -37,13 +37,179 @@
             {% csrf_token %}
 
             <!-- No cover letter callout — shown first so parent knows before uploading -->
-            <div class="d-flex gap-2 align-items-center p-3 rounded-3 mb-4"
+            <div class="d-flex gap-2 align-items-center p-3 rounded-3 mb-3"
                  style="background:#f0fdf4; border:1px solid #bbf7d0;">
                 <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
                 <span style="font-size:.87rem; color:#15803d;">
-                    No cover letter needed — just send your CV if you have one.
+                    No cover letter needed — just your CV is fine.
                 </span>
             </div>
+
+            <!-- Optional personal note — collapsed by default to keep zero-friction promise -->
+            <details class="note-block mb-4" id="noteBlock">
+                <summary class="note-summary">
+                    <span class="note-summary-text">
+                        <i class="bi bi-chat-heart"></i>
+                        Want to add a quick personal note?
+                        <span class="text-quiet fw-normal">&nbsp;(optional · 2 sentences)</span>
+                    </span>
+                    <i class="bi bi-chevron-down note-chevron"></i>
+                </summary>
+
+                <div class="note-body">
+                    <p class="text-quiet small mb-2">
+                        Stuck on what to say? Pick a tone and Hirely can sketch a first line —
+                        you stay in control and edit before sending.
+                    </p>
+
+                    <div class="note-tone-row" role="radiogroup" aria-label="Note tone">
+                        <button type="button" class="note-tone active" data-tone="warm">🌤️ Warm</button>
+                        <button type="button" class="note-tone" data-tone="confident">💪 Confident</button>
+                        <button type="button" class="note-tone" data-tone="brief">⚡ Brief</button>
+                    </div>
+
+                    <textarea
+                        id="noteTextarea"
+                        name="note"
+                        rows="3"
+                        maxlength="400"
+                        class="form-control note-textarea"
+                        placeholder="Optional — a quick line about why this role fits your week."></textarea>
+
+                    <div class="note-actions">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="draftNoteBtn">
+                            <i class="bi bi-stars"></i>
+                            <span class="draft-label">Help me start</span>
+                        </button>
+                        <span class="note-counter text-quiet" id="noteCounter">0 / 400</span>
+                    </div>
+                </div>
+            </details>
+
+            <script>
+            (function () {
+              const detailsEl = document.getElementById('noteBlock');
+              const textarea  = document.getElementById('noteTextarea');
+              const counter   = document.getElementById('noteCounter');
+              const draftBtn  = document.getElementById('draftNoteBtn');
+              const draftLabel= draftBtn.querySelector('.draft-label');
+              const toneBtns  = document.querySelectorAll('.note-tone');
+              const csrf      = document.querySelector('[name=csrfmiddlewaretoken]').value;
+              let selectedTone = 'warm';
+
+              const updateCounter = () => {
+                counter.textContent = `${textarea.value.length} / 400`;
+              };
+              textarea.addEventListener('input', updateCounter);
+              updateCounter();
+
+              toneBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                  toneBtns.forEach(b => b.classList.remove('active'));
+                  btn.classList.add('active');
+                  selectedTone = btn.dataset.tone;
+                });
+              });
+
+              draftBtn.addEventListener('click', async () => {
+                if (draftBtn.disabled) return;
+                draftBtn.disabled = true;
+                const previous = draftLabel.textContent;
+                draftLabel.textContent = 'Drafting…';
+
+                try {
+                  const resp = await fetch("{% url 'draft_application_note' job.pk %}", {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': csrf,
+                    },
+                    body: JSON.stringify({
+                      tone: selectedTone,
+                      seed: textarea.value,
+                    }),
+                  });
+                  const data = await resp.json();
+                  if (data.note) {
+                    textarea.value = data.note;
+                    updateCounter();
+                    draftLabel.textContent = 'Regenerate';
+                  } else if (data.error) {
+                    draftLabel.textContent = data.error;
+                    setTimeout(() => { draftLabel.textContent = previous; }, 2500);
+                  } else {
+                    draftLabel.textContent = previous;
+                  }
+                } catch (e) {
+                  draftLabel.textContent = 'Try again';
+                  setTimeout(() => { draftLabel.textContent = previous; }, 2000);
+                } finally {
+                  draftBtn.disabled = false;
+                }
+              });
+            })();
+            </script>
+
+            <style>
+            .note-block {
+              border: 1px solid #e6ebf5;
+              border-radius: 12px;
+              background: #fff;
+            }
+            .note-block[open] { background: #fafbff; }
+            .note-summary {
+              list-style: none;
+              cursor: pointer;
+              padding: 12px 14px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 8px;
+              font-size: .92rem;
+              color: var(--text, #0f172a);
+              font-weight: 500;
+            }
+            .note-summary::-webkit-details-marker { display: none; }
+            .note-summary i.bi-chat-heart { color: #3b6ff0; margin-right: 4px; }
+            .note-chevron { transition: transform .2s; color: #94a3b8; }
+            .note-block[open] .note-chevron { transform: rotate(180deg); }
+
+            .note-body { padding: 0 14px 14px; }
+            .note-tone-row {
+              display: flex; flex-wrap: wrap; gap: 6px;
+              margin-bottom: 10px;
+            }
+            .note-tone {
+              border: 1px solid #dbe4ff;
+              background: #fff;
+              border-radius: 999px;
+              padding: 5px 12px;
+              font-size: .82rem;
+              cursor: pointer;
+              color: #334155;
+              transition: background .15s, border-color .15s, color .15s;
+            }
+            .note-tone:hover { background: #f0f4ff; }
+            .note-tone.active {
+              background: #3b6ff0;
+              border-color: #3b6ff0;
+              color: #fff;
+            }
+            .note-textarea {
+              border-radius: 10px;
+              font-size: .92rem;
+              resize: vertical;
+            }
+            .note-actions {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-top: 8px;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .note-counter { font-size: .78rem; }
+            </style>
 
             <!-- Upload zone — large, tap-friendly, drag-and-drop ready -->
             <div class="mb-4">

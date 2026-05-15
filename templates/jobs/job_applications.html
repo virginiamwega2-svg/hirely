@@ -28,6 +28,12 @@
                             <small class="text-muted d-block mb-2">
                                 <i class="bi bi-clock"></i> Applied {{ app.applied_at|timesince }} ago
                             </small>
+                            {% if app.note %}
+                                <blockquote class="mt-1 mb-2 ps-3"
+                                            style="border-left:3px solid #3b6ff0; font-size:.92rem; color:var(--text); line-height:1.5;">
+                                    {{ app.note }}
+                                </blockquote>
+                            {% endif %}
                             {% if app.resume %}
                                 <a href="{{ app.resume.url }}" target="_blank" class="btn btn-outline-success btn-sm">
                                     <i class="bi bi-file-earmark-arrow-down"></i> Download Resume

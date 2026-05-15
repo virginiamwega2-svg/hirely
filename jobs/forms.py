@@ -82,4 +82,12 @@ class ApplicationForm(forms.ModelForm):
 
     class Meta:
         model = Application
-        fields = ['resume']
+        fields = ['resume', 'note']
+        widgets = {
+            'note': forms.Textarea(attrs={
+                'rows': 3,
+                'maxlength': 400,
+                'placeholder': 'Optional — a quick line about why this role fits your week.',
+                'class': 'form-control',
+            }),
+        }

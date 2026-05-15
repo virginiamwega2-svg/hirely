@@ -472,6 +472,87 @@ def chat(request):
     return JsonResponse({'reply': "Hmm, I got a bit tangled — try rephrasing?", 'jobs': collected_jobs})
 
 
+# ─────────────────────────────────────────────────────────────────────
+# Application assistant — drafts an optional short personal note for
+# the parent. Tone-controlled, fully editable, 1–2 sentences max.
+# ─────────────────────────────────────────────────────────────────────
+
+DRAFT_TONES = {
+    'warm':       'warm and personable — like writing to someone you trust',
+    'confident':  'confident and capable — quietly self-assured, no bragging',
+    'brief':      'very brief and direct — just the essentials, one sentence',
+}
+
+DRAFT_SYSTEM_PROMPT = """You help busy parents write a short, optional personal note on a job application.
+
+Rules:
+- Output ONLY the note text. No greeting, no sign-off, no quotation marks, no preamble.
+- 1–2 sentences. Maximum 300 characters.
+- Sound like a real parent — not a corporate cover letter. Plain words.
+- Reference one concrete fit between the parent's situation and the role (schedule, remote, hours, skills).
+- Never invent specifics about the parent. If the user-provided seed is empty, write something universally true and warm.
+- Never apologise for being a parent or for needing flexibility — frame it as normal.
+"""
+
+
+@login_required
+@require_POST
+def draft_application_note(request, pk):
+    """POST JSON: { "tone": "warm|confident|brief", "seed": "optional user text" }
+    Returns: { "note": "..." }"""
+    job = get_object_or_404(Job, pk=pk, is_active=True)
+
+    if not settings.ANTHROPIC_API_KEY:
+        return JsonResponse({'note': '', 'error': "AI assistant isn't connected yet."}, status=200)
+
+    try:
+        body = json.loads(request.body or b'{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid json'}, status=400)
+
+    tone_key = body.get('tone', 'warm')
+    tone_desc = DRAFT_TONES.get(tone_key, DRAFT_TONES['warm'])
+    seed = (body.get('seed') or '').strip()[:400]
+
+    user_prompt = (
+        f"Role: {job.title} at {job.company}\n"
+        f"Schedule: {job.get_schedule_type_display()}"
+        f"{' · Remote' if job.is_remote else ''}"
+        f"{f' · {job.hours_per_day} hrs/day' if job.hours_per_day else ''}\n"
+        f"What they're hiring for: {(job.description or '')[:500]}\n\n"
+        f"Tone: {tone_desc}\n"
+    )
+    if seed:
+        user_prompt += f"\nWhat the parent said (use as a seed, don't invent beyond it):\n{seed}\n"
+    user_prompt += "\nWrite the note now."
+
+    from anthropic import Anthropic, APIError
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    try:
+        resp = client.messages.create(
+            model=CHAT_MODEL,
+            max_tokens=200,
+            system=DRAFT_SYSTEM_PROMPT,
+            messages=[{'role': 'user', 'content': user_prompt}],
+        )
+    except APIError as e:
+        logger.warning('draft_application_note API error: %s', e)
+        msg = str(getattr(e, 'message', '') or e)
+        friendly = (
+            "AI is resting — the site needs to top up Anthropic credits."
+            if 'credit balance' in msg.lower()
+            else "Couldn't draft right now — try again in a moment."
+        )
+        return JsonResponse({'note': '', 'error': friendly}, status=200)
+
+    note = ''.join(b.text for b in resp.content if getattr(b, 'type', None) == 'text').strip()
+    # Strip any stray quotes the model might have wrapped.
+    if note.startswith(('"', "'")) and note.endswith(('"', "'")):
+        note = note[1:-1].strip()
+    return JsonResponse({'note': note[:400]})
+
+
 @login_required
 def update_application_status(request, pk):
     app = get_object_or_404(Application, pk=pk, job__posted_by=request.user)

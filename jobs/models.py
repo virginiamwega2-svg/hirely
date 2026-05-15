@@ -131,6 +131,12 @@ class Application(models.Model):
     job       = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
     applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
     resume    = models.FileField(upload_to='resumes/', blank=True, null=True)
+    note      = models.CharField(
+        max_length=400,
+        blank=True,
+        verbose_name='Personal Note',
+        help_text='Optional 1–2 sentence intro — kept short on purpose.',
+    )
     status    = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True)
 
@@ -140,3 +146,15 @@ class Application(models.Model):
 
     def __str__(self):
         return f'{self.applicant.email} → {self.job.title}'
+
+
+class DigestLog(models.Model):
+    """
+    Throttle record for the weekly AI-curated job digest.
+    One row per user; updated each time we send their digest.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='digest_log')
+    last_sent_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Digest for {self.user.email} @ {self.last_sent_at:%Y-%m-%d}'
