@@ -282,6 +282,12 @@ def delete_job(request, pk):
 @login_required
 def job_applications(request, pk):
     job = get_object_or_404(Job, pk=pk, posted_by=request.user)
+
+    # Auto-mark "seen": opening the applicant list IS the employer seeing
+    # them, so flip pending → seen. Idempotent (only touches pending rows),
+    # so refreshing the page never resets a later status.
+    Application.objects.filter(job=job, status='pending').update(status='seen')
+
     applications = job.applications.select_related('applicant').order_by('-applied_at')
     paginator = Paginator(applications, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
