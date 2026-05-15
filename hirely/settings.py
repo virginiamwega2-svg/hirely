@@ -76,6 +76,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'hirely.wsgi.application'
 
+# Anthropic API — powers the "Talk to Hirely" chat agent.
+# Set ANTHROPIC_API_KEY in your env (.env locally, Render dashboard in prod).
+ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
+
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases

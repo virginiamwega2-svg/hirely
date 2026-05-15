@@ -276,6 +276,202 @@ def toggle_job_active(request, pk):
     return redirect('employer_dashboard')
 
 
+# ─────────────────────────────────────────────────────────────────────
+# "Talk to Hirely" — conversational agent powered by Claude with a
+# search_jobs tool grounded in our own Job table.
+# ─────────────────────────────────────────────────────────────────────
+
+import json
+import logging
+from django.views.decorators.http import require_POST
+
+logger = logging.getLogger(__name__)
+
+CHAT_MODEL = 'claude-haiku-4-5-20251001'  # fast + cheap, plenty for this task
+
+SEARCH_JOBS_TOOL = {
+    'name': 'search_jobs',
+    'description': (
+        "Search Hirely's active flexible job listings. Call this once you "
+        "have at least one concrete signal (hours, remote/on-site, schedule "
+        "pattern, or keywords). Be lenient — partial matches are fine. "
+        "Results are sorted by recency."
+    ),
+    'input_schema': {
+        'type': 'object',
+        'properties': {
+            'keywords': {
+                'type': 'string',
+                'description': 'Free-text keywords matched against title, company, and description.',
+            },
+            'schedule_type': {
+                'type': 'string',
+                'enum': ['fixed', 'flexible', 'anytime'],
+                'description': (
+                    'fixed = employer sets specific days/hours, '
+                    'flexible = total hours agreed but parent picks when, '
+                    'anytime = fully async, no required hours.'
+                ),
+            },
+            'is_remote': {
+                'type': 'boolean',
+                'description': 'True to filter to remote-only roles.',
+            },
+            'max_hours_per_day': {
+                'type': 'integer',
+                'description': 'Maximum hours/day the parent can work (e.g. 4 for mornings only).',
+            },
+        },
+        'required': [],
+    },
+}
+
+SYSTEM_PROMPT = """You are Hirely — a warm, briefly-spoken assistant on a job board for busy parents.
+
+Tone:
+- Friendly like a knowledgeable friend, never corporate.
+- Concise. 1–3 short sentences per turn. No lectures.
+- Validate parent realities (school runs, naps, term-time) as normal.
+
+Behaviour:
+- If you have at least one concrete signal, call search_jobs.
+- If the request is vague, ask ONE quick clarifying question — never a list.
+- After search_jobs returns, mention how many fit in one sentence. The UI renders the cards, so DO NOT list every job in prose.
+- If zero results, suggest widening one specific constraint.
+- Never invent jobs or details — only refer to what search_jobs returned.
+"""
+
+
+def _job_to_card(job):
+    """Serialise a Job for the chat UI."""
+    return {
+        'id': job.id,
+        'title': job.title,
+        'company': job.company,
+        'location': job.location or '',
+        'salary': job.salary or '',
+        'schedule_type': job.get_schedule_type_display(),
+        'is_remote': job.is_remote,
+        'hours_per_day': job.hours_per_day,
+        'flex_label': job.flex_label,
+        'flex_colour': job.flex_colour,
+        'url': reverse('job_detail', args=[job.id]),
+        'description': (job.description or '')[:160],
+    }
+
+
+def _run_search_jobs(params):
+    """Execute the search_jobs tool against the Job table."""
+    qs = Job.objects.filter(is_active=True).select_related('posted_by')
+
+    keywords = (params.get('keywords') or '').strip()
+    if keywords:
+        qs = qs.filter(
+            Q(title__icontains=keywords)
+            | Q(company__icontains=keywords)
+            | Q(description__icontains=keywords)
+        )
+
+    schedule_type = params.get('schedule_type')
+    if schedule_type in {'fixed', 'flexible', 'anytime'}:
+        qs = qs.filter(schedule_type=schedule_type)
+
+    if params.get('is_remote') is True:
+        qs = qs.filter(is_remote=True)
+
+    max_hpd = params.get('max_hours_per_day')
+    if isinstance(max_hpd, int) and max_hpd > 0:
+        # Include unspecified (NULL) hours_per_day too — they may still fit.
+        qs = qs.filter(Q(hours_per_day__lte=max_hpd) | Q(hours_per_day__isnull=True))
+
+    jobs = list(qs.order_by('-created_at')[:6])
+    return {
+        'count': len(jobs),
+        'jobs': [_job_to_card(j) for j in jobs],
+    }
+
+
+@require_POST
+def chat(request):
+    """
+    POST JSON: { "messages": [ {role, content}, ... ] }
+    Returns JSON: { "reply": str, "jobs": [card,...] }
+    """
+    if not settings.ANTHROPIC_API_KEY:
+        return JsonResponse(
+            {'reply': "I'm not connected to my brain yet — the site owner needs to set ANTHROPIC_API_KEY.", 'jobs': []},
+            status=200,
+        )
+
+    try:
+        body = json.loads(request.body or b'{}')
+        messages = body.get('messages') or []
+        if not isinstance(messages, list) or not messages:
+            return JsonResponse({'error': 'messages required'}, status=400)
+        # Sanity-cap turn count to keep cost bounded.
+        messages = messages[-20:]
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid json'}, status=400)
+
+    # Lazy import so the SDK isn't required at startup if the key is unset.
+    from anthropic import Anthropic
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    from anthropic import APIError
+
+    collected_jobs = []
+    # Tool-use loop — at most 2 rounds (the agent should rarely need more).
+    for _ in range(3):
+        try:
+            resp = client.messages.create(
+                model=CHAT_MODEL,
+                max_tokens=512,
+                system=SYSTEM_PROMPT,
+                tools=[SEARCH_JOBS_TOOL],
+                messages=messages,
+            )
+        except APIError as e:
+            logger.warning('Anthropic API error: %s', e)
+            msg = str(getattr(e, 'message', '') or e)
+            if 'credit balance' in msg.lower():
+                friendly = "I'm temporarily resting — the site needs to top up its Anthropic credits. Try again shortly."
+            else:
+                friendly = "I'm having a moment — try again in a few seconds?"
+            return JsonResponse({'reply': friendly, 'jobs': collected_jobs}, status=200)
+
+        if resp.stop_reason == 'tool_use':
+            # Append the assistant's tool_use turn.
+            messages.append({'role': 'assistant', 'content': resp.content})
+
+            # Execute every tool_use block, collect results.
+            tool_results = []
+            for block in resp.content:
+                if block.type == 'tool_use' and block.name == 'search_jobs':
+                    try:
+                        result = _run_search_jobs(block.input or {})
+                    except Exception:
+                        logger.exception('search_jobs failed')
+                        result = {'count': 0, 'jobs': [], 'error': 'search failed'}
+                    collected_jobs = result['jobs']  # keep the latest set
+                    tool_results.append({
+                        'type': 'tool_result',
+                        'tool_use_id': block.id,
+                        'content': json.dumps({'count': result['count'], 'jobs': result['jobs']}),
+                    })
+
+            messages.append({'role': 'user', 'content': tool_results})
+            continue  # let the model speak again with results in hand
+
+        # end_turn / max_tokens / stop_sequence — final assistant reply.
+        reply_text = ''.join(
+            block.text for block in resp.content if getattr(block, 'type', None) == 'text'
+        ).strip()
+        return JsonResponse({'reply': reply_text, 'jobs': collected_jobs})
+
+    # Safety net if the loop runs away.
+    return JsonResponse({'reply': "Hmm, I got a bit tangled — try rephrasing?", 'jobs': collected_jobs})
+
+
 @login_required
 def update_application_status(request, pk):
     app = get_object_or_404(Application, pk=pk, job__posted_by=request.user)
