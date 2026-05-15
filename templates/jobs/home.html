@@ -456,71 +456,60 @@
 <!-- Anchor for the "browse all" jump -->
 <div id="browse"></div>
 
-<!-- Original video hero kept below as the browse-mode entry ───── -->
-<div class="hero-video-wrap text-center mb-5">
-
-    <!-- Video — muted, looping, hidden on reduced-motion -->
-    <video class="hero-video" autoplay muted loop playsinline>
-        <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
-    </video>
-
-    <!-- Dark overlay so text stays readable -->
-    <div class="hero-overlay"></div>
-
-    <!-- Content sits on top -->
-    <div class="hero-content container" style="max-width:640px;">
-        <h1 class="fw-bold mb-2" style="font-size:clamp(1.8rem,5vw,2.6rem); line-height:1.2;">
-            Work that fits around<br>school, naps, and life.
-        </h1>
-        <p class="mb-3" style="opacity:.88; font-size:1.05rem;">
-            Every role here is flexible. Pick your schedule and go.
+<!-- Slim tagline strip — used to be a full video hero; demoted now
+     that the chat above is the real front door. Keeps the tagline
+     atmosphere + browse-by-schedule chips in one compact band. ─── -->
+<section class="tagline-strip">
+    <div class="container d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <p class="tagline-strip-text mb-0">
+            Work that fits around
+            <span class="tagline-strip-accent">school, naps, and life.</span>
+            <span class="tagline-strip-count">·
+                {{ total_jobs }} role{{ total_jobs|pluralize }} open
+            </span>
         </p>
-        <p class="mb-4" style="opacity:.75; font-size:.95rem;">
-            <strong style="opacity:1; font-size:1.1rem;">{{ total_jobs }}</strong>
-            flexible role{{ total_jobs|pluralize }} available right now
-        </p>
-        <div class="chip-row justify-content-center">
-            <a href="{% url 'job_list' %}?schedule_type=fixed"    class="btn btn-light flex-chip"><i class="bi bi-alarm"></i> Fixed</a>
-            <a href="{% url 'job_list' %}?schedule_type=flexible" class="btn btn-light flex-chip"><i class="bi bi-toggles"></i> Flexible</a>
-            <a href="{% url 'job_list' %}?schedule_type=anytime"  class="btn btn-light flex-chip"><i class="bi bi-infinity"></i> Async</a>
-            <a href="{% url 'job_list' %}?remote_only=1"          class="btn btn-light flex-chip"><i class="bi bi-laptop"></i> Remote</a>
+        <div class="chip-row tagline-strip-chips" aria-label="Browse by schedule">
+            <a href="{% url 'job_list' %}?schedule_type=fixed"    class="btn btn-light flex-chip"><i class="bi bi-alarm" aria-hidden="true"></i> Fixed</a>
+            <a href="{% url 'job_list' %}?schedule_type=flexible" class="btn btn-light flex-chip"><i class="bi bi-toggles" aria-hidden="true"></i> Flexible</a>
+            <a href="{% url 'job_list' %}?schedule_type=anytime"  class="btn btn-light flex-chip"><i class="bi bi-infinity" aria-hidden="true"></i> Async</a>
+            <a href="{% url 'job_list' %}?remote_only=1"          class="btn btn-light flex-chip"><i class="bi bi-laptop" aria-hidden="true"></i> Remote</a>
         </div>
     </div>
-</div>
+</section>
 {% endif %}
 
 <style>
-.hero-video-wrap {
-    position: relative;
-    overflow: hidden;
-    padding: 80px 0;
-    background: linear-gradient(135deg, #3b6ff0 0%, #30b8df 100%); /* fallback */
-    color: white;
+.tagline-strip {
+    background: linear-gradient(135deg, #3b6ff0 0%, #30b8df 100%);
+    color: #fff;
+    padding: 18px 0;
+    margin-bottom: 32px;
 }
-@media (max-width: 767px) { .hero-video-wrap { padding: 52px 0; } }
-
-.hero-video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
+.tagline-strip-text {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
 }
-/* Pause video for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-    .hero-video { display: none; }
+.tagline-strip-accent { font-weight: 700; }
+.tagline-strip-count {
+    opacity: .8;
+    font-weight: 400;
+    margin-left: 4px;
+    white-space: nowrap;
 }
-
-.hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(15, 30, 80, 0.58);
-    z-index: 1;
+.tagline-strip-chips .flex-chip {
+    background: rgba(255,255,255,.12);
+    border-color: rgba(255,255,255,.25);
+    color: #fff;
 }
-.hero-content {
-    position: relative;
-    z-index: 2;
+.tagline-strip-chips .flex-chip:hover {
+    background: rgba(255,255,255,.22);
+    color: #fff;
+}
+@media (max-width: 575.98px) {
+    .tagline-strip { padding: 14px 0; }
+    .tagline-strip-text { font-size: .92rem; }
+    .tagline-strip-count { display: block; margin-left: 0; margin-top: 2px; }
 }
 </style>
 
