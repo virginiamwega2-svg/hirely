@@ -91,6 +91,74 @@
 {% else %}
 <!-- Chat-first hero ─────────────────────────────────────────────── -->
 <section class="chat-hero">
+
+  <!-- Decorative background illustration — left corner (home-office scene) -->
+  <svg class="hero-deco hero-deco-left" xmlns="http://www.w3.org/2000/svg"
+       width="300" height="220" viewBox="0 0 300 220" fill="none" aria-hidden="true">
+    <!-- plant stem + leaves -->
+    <path d="M32 158 Q32 138 32 122" stroke="#10b981" stroke-width="2" opacity="0.22" stroke-linecap="round"/>
+    <path d="M32 155 Q12 138 15 114 Q25 124 32 142" fill="#10b981" opacity="0.18"/>
+    <path d="M32 155 Q52 138 49 114 Q39 124 32 142" fill="#10b981" opacity="0.18"/>
+    <ellipse cx="32" cy="118" rx="10" ry="7" fill="#10b981" opacity="0.13"/>
+    <!-- plant pot -->
+    <rect x="18" y="158" width="28" height="24" rx="4" fill="#10b981" opacity="0.13"/>
+    <!-- desk surface -->
+    <rect x="50" y="158" width="240" height="10" rx="5" fill="#3b6ff0" opacity="0.11"/>
+    <!-- desk leg -->
+    <rect x="262" y="168" width="10" height="40" rx="5" fill="#3b6ff0" opacity="0.09"/>
+    <!-- laptop base -->
+    <rect x="95" y="133" width="105" height="26" rx="5" fill="#3b6ff0" opacity="0.12"/>
+    <!-- laptop screen -->
+    <rect x="100" y="92" width="95" height="44" rx="5" fill="#3b6ff0" opacity="0.09"/>
+    <!-- screen lines (content) -->
+    <rect x="108" y="101" width="52" height="4" rx="2" fill="#3b6ff0" opacity="0.2"/>
+    <rect x="108" y="111" width="38" height="4" rx="2" fill="#10b981" opacity="0.2"/>
+    <rect x="108" y="121" width="46" height="4" rx="2" fill="#3b6ff0" opacity="0.14"/>
+    <!-- coffee mug body -->
+    <rect x="215" y="127" width="27" height="30" rx="7" fill="#f59e0b" opacity="0.14"/>
+    <!-- mug handle -->
+    <path d="M242 135 Q254 135 254 143 Q254 151 242 151" stroke="#f59e0b" stroke-width="2.5"
+          fill="none" opacity="0.17" stroke-linecap="round"/>
+    <!-- steam -->
+    <path class="deco-steam" d="M222 125 Q224 117 222 110" stroke="#94a3b8" stroke-width="1.8" fill="none"
+          opacity="0.28" stroke-linecap="round"/>
+    <path class="deco-steam deco-steam-2" d="M230 123 Q232 114 230 107" stroke="#94a3b8" stroke-width="1.8" fill="none"
+          opacity="0.28" stroke-linecap="round"/>
+    <!-- ground dots -->
+    <circle cx="8" cy="190" r="4" fill="#10b981" opacity="0.14"/>
+    <circle cx="22" cy="202" r="3" fill="#3b6ff0" opacity="0.11"/>
+  </svg>
+
+  <!-- Decorative background illustration — right corner (abstract/lifestyle) -->
+  <svg class="hero-deco hero-deco-right" xmlns="http://www.w3.org/2000/svg"
+       width="210" height="290" viewBox="0 0 210 290" fill="none" aria-hidden="true">
+    <!-- large soft blob -->
+    <circle cx="178" cy="44" r="68" fill="#3b6ff0" opacity="0.055"/>
+    <!-- medium blob -->
+    <circle cx="196" cy="138" r="42" fill="#10b981" opacity="0.065"/>
+    <!-- dot cluster top -->
+    <circle cx="82" cy="22" r="7" fill="#3b6ff0" opacity="0.14"/>
+    <circle cx="104" cy="38" r="5" fill="#10b981" opacity="0.12"/>
+    <circle cx="124" cy="18" r="6" fill="#f59e0b" opacity="0.13"/>
+    <circle cx="144" cy="52" r="4" fill="#3b6ff0" opacity="0.1"/>
+    <circle cx="118" cy="56" r="3" fill="#10b981" opacity="0.15"/>
+    <!-- sparkle -->
+    <path class="deco-sparkle" d="M62 94 L64 86 L66 94 L74 96 L66 98 L64 106 L62 98 L54 96 Z"
+          fill="#10b981" opacity="0.18"/>
+    <!-- small house -->
+    <path d="M144 186 L165 162 L186 186 Z" fill="#f59e0b" opacity="0.12"/>
+    <rect x="150" y="186" width="30" height="24" rx="3" fill="#f59e0b" opacity="0.09"/>
+    <rect x="159" y="195" width="12" height="15" rx="2" fill="#f59e0b" opacity="0.12"/>
+    <!-- clock (work-life balance) -->
+    <circle cx="56" cy="204" r="19" stroke="#3b6ff0" stroke-width="2.5" opacity="0.13" fill="none"/>
+    <path d="M56 193 L56 204 L64 204" stroke="#3b6ff0" stroke-width="2" opacity="0.15"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- bottom dots -->
+    <circle cx="174" cy="248" r="6" fill="#10b981" opacity="0.11"/>
+    <circle cx="194" cy="268" r="4" fill="#3b6ff0" opacity="0.09"/>
+    <circle cx="158" cy="272" r="5" fill="#f59e0b" opacity="0.1"/>
+  </svg>
+
   <div class="container" style="max-width:720px;">
     <span class="hirely-mark hirely-mark--lg chat-hero-avatar" aria-hidden="true">H</span>
     <h1 class="chat-hero-title">
@@ -145,6 +213,25 @@
     </a>
   </div>
 </section>
+
+<script>
+/* Lazy-reveal hero decorations via IntersectionObserver.
+   The SVGs start opacity:0; the 'deco-visible' class triggers their animations. */
+(function () {
+  const hero = document.querySelector('.chat-hero');
+  if (!hero) return;
+  const io = new IntersectionObserver(
+    (entries, obs) => {
+      if (entries[0].isIntersecting) {
+        hero.classList.add('deco-visible');
+        obs.disconnect();
+      }
+    },
+    { threshold: 0.1 }
+  );
+  io.observe(hero);
+})();
+</script>
 
 <script>
 (function () {
@@ -277,6 +364,8 @@
 
 <style>
 .chat-hero {
+  position: relative;
+  overflow: hidden;
   padding: 72px 16px 56px;
   background: radial-gradient(circle at 20% 0%, #eef3ff 0%, transparent 55%),
               radial-gradient(circle at 85% 100%, #e6f7ff 0%, transparent 50%),
@@ -284,6 +373,68 @@
   text-align: center;
 }
 @media (max-width: 600px) { .chat-hero { padding: 48px 14px 40px; } }
+
+.hero-deco {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;                  /* hidden until IntersectionObserver fires */
+  will-change: opacity, transform;
+}
+.hero-deco-left  { bottom: 0; left: 0; }
+.hero-deco-right { top: 0; right: 0; }
+@media (max-width: 860px) { .hero-deco { display: none; } }
+
+/* Entrance + continuous float — added by JS once hero is visible */
+.chat-hero.deco-visible .hero-deco-left {
+  animation:
+    deco-enter  0.9s cubic-bezier(.22,.68,0,1.2) forwards,
+    float-left  7s ease-in-out 0.9s infinite;
+}
+.chat-hero.deco-visible .hero-deco-right {
+  animation:
+    deco-enter  0.9s cubic-bezier(.22,.68,0,1.2) 0.15s forwards,
+    float-right 8s ease-in-out 1.05s infinite;
+}
+
+@keyframes deco-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float-left {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
+}
+@keyframes float-right {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-9px); }
+}
+
+/* Steam rising from coffee mug */
+.deco-steam {
+  animation: steam-rise 2.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+.deco-steam-2 { animation-delay: 0.55s; }
+@keyframes steam-rise {
+  0%   { opacity: 0;    transform: translateY(0)    scaleX(1);   }
+  30%  { opacity: 0.28;                                           }
+  70%  { opacity: 0.14; transform: translateY(-7px) scaleX(1.2); }
+  100% { opacity: 0;    transform: translateY(-13px) scaleX(0.7);}
+}
+
+/* Sparkle twinkle */
+.deco-sparkle {
+  animation: twinkle 3.5s ease-in-out 1.2s infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.18; transform: scale(1) rotate(0deg);   }
+  45%       { opacity: 0.38; transform: scale(1.25) rotate(15deg); }
+  55%       { opacity: 0.38; transform: scale(1.25) rotate(15deg); }
+}
 
 /* Hero avatar reuses .hirely-mark from base.html for brand cohesion. */
 .chat-hero-avatar {
