@@ -146,7 +146,7 @@ def register(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'Welcome to Hirely! Start finding your flexible role.')
             return redirect('job_list')
     else:
