@@ -29,6 +29,10 @@ services:
       # Set the value manually in the Render dashboard.
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
 
   # Weekly AI-curated digest — Mondays 09:00 UTC.
   - type: cron
