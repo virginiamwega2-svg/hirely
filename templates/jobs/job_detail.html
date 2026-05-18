@@ -209,6 +209,23 @@
                         Already signed up? <a href="{% url 'login' %}">Log in</a>
                     </p>
                 {% endif %}
+
+                <!-- Save for later -->
+                {% if user.is_authenticated and not has_applied %}
+                <div class="mt-3 text-center">
+                    <form method="post" action="{% url 'toggle_save_job' job.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                            {% if is_saved %}
+                                <i class="bi bi-heart-fill text-danger"></i> Saved — tap to remove
+                            {% else %}
+                                <i class="bi bi-heart"></i> Save for later
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
             </div>
 
         </div>

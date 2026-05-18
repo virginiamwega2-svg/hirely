@@ -85,8 +85,29 @@
 
                         <hr class="my-4">
 
-                        <!-- Description -->
+                        <!-- Description + AI writer -->
                         <h6 class="fw-bold text-uppercase text-muted small mb-3">Role Description</h6>
+
+                        <!-- AI quick-fill -->
+                        <div class="p-3 mb-3 rounded" style="background:var(--primary-50); border:1px solid #a7f3d0;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="hirely-mark hirely-mark--sm" aria-hidden="true">H</span>
+                                <span class="fw-semibold" style="font-size:.88rem;">AI Job Writer</span>
+                                <span class="badge bg-success ms-auto" style="font-size:.7rem;">Beta</span>
+                            </div>
+                            <p class="text-quiet small mb-2">Describe the role in one sentence and Hirely will draft the full description for you.</p>
+                            <div class="d-flex gap-2">
+                                <input type="text" id="aiJobBrief" class="form-control form-control-sm"
+                                       placeholder="e.g. Looking for a customer support rep, mornings only, fully remote"
+                                       maxlength="600">
+                                <button type="button" id="aiJobWriteBtn" class="btn btn-sm btn-primary flex-shrink-0"
+                                        onclick="draftJobDescription()">
+                                    <span id="aiJobBtnLabel"><i class="bi bi-stars"></i> Write it</span>
+                                </button>
+                            </div>
+                            <div id="aiJobError" class="text-danger small mt-1" style="display:none;"></div>
+                        </div>
+
                         <div class="row g-3 mb-4">
                             <div class="col-12">
                                 {{ form.description|as_crispy_field }}
@@ -110,4 +131,39 @@
         </div>
     </div>
 </div>
+
+<script>
+async function draftJobDescription() {
+    const brief = document.getElementById('aiJobBrief').value.trim();
+    const errorEl = document.getElementById('aiJobError');
+    const btnLabel = document.getElementById('aiJobBtnLabel');
+    errorEl.style.display = 'none';
+    if (!brief) { errorEl.textContent = 'Enter a one-sentence description first.'; errorEl.style.display = ''; return; }
+    btnLabel.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Writing…';
+    document.getElementById('aiJobWriteBtn').disabled = true;
+
+    const formData = new FormData();
+    formData.append('brief', brief);
+    formData.append('title', document.getElementById('id_title')?.value || '');
+    formData.append('schedule_type', document.getElementById('id_schedule_type')?.value || 'flexible');
+    formData.append('hours_per_day', document.getElementById('id_hours_per_day')?.value || '');
+    formData.append('is_remote', document.getElementById('id_is_remote')?.checked ? 'true' : 'false');
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    try {
+        const res = await fetch('{% url "draft_job_description" %}', {method: 'POST', body: formData});
+        const data = await res.json();
+        if (data.error) {
+            errorEl.textContent = data.error; errorEl.style.display = '';
+        } else {
+            if (data.description) document.getElementById('id_description').value = data.description;
+            if (data.requirements) document.getElementById('id_requirements').value = data.requirements;
+        }
+    } catch(e) {
+        errorEl.textContent = 'Something went wrong — try again.'; errorEl.style.display = '';
+    }
+    btnLabel.innerHTML = '<i class="bi bi-stars"></i> Write it';
+    document.getElementById('aiJobWriteBtn').disabled = false;
+}
+</script>
 {% endblock %}

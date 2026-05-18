@@ -68,6 +68,17 @@
                         {% endif %}
                     </div>
 
+                    <!-- Withdraw — only on pending/seen -->
+                    {% if app.status == 'pending' or app.status == 'seen' %}
+                    <div class="mt-3">
+                        <a href="{% url 'withdraw_application' app.pk %}"
+                           class="btn btn-sm btn-outline-secondary"
+                           style="font-size:.8rem; color:var(--muted);">
+                            Withdraw
+                        </a>
+                    </div>
+                    {% endif %}
+
                     <!-- Status — clear and human -->
                     <div class="text-end flex-shrink-0">
                         {% if app.status == 'pending' %}

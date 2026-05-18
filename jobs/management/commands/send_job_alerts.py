@@ -21,7 +21,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Count
 from django.utils import timezone
 
-from jobs.models import Application, DigestLog, Job
+from jobs.models import Application, DigestLog, DigestOptOut, Job
 
 
 DIGEST_SYSTEM_PROMPT = """You write a short, warm intro for a weekly job digest emailed to busy parents.
@@ -105,7 +105,13 @@ def _draft_intro(user, jobs):
     return text or None
 
 
-def _build_body(intro, jobs, base_url):
+def _unsubscribe_url(user, base_url):
+    from django.core import signing
+    token = signing.dumps(user.pk, salt='digest-unsubscribe')
+    return f'{base_url}/unsubscribe/{token}/'
+
+
+def _build_body(intro, jobs, base_url, user):
     lines = []
     if intro:
         lines.append(intro)
@@ -129,7 +135,7 @@ def _build_body(intro, jobs, base_url):
         lines.append(f'  {base_url}/jobs/{j.pk}/')
         lines.append('')
     lines.append('— Hirely')
-    lines.append('You\'re getting this because you applied to a role recently.')
+    lines.append(f'Unsubscribe: {_unsubscribe_url(user, base_url)}')
     return '\n'.join(lines)
 
 
@@ -163,9 +169,11 @@ class Command(BaseCommand):
         if opts['user']:
             candidates = candidates.filter(email__iexact=opts['user'])
 
+        opted_out = set(DigestOptOut.objects.values_list('user_id', flat=True))
+
         sent = skipped = 0
         for user in candidates:
-            if not user.email:
+            if not user.email or user.pk in opted_out:
                 skipped += 1
                 continue
 
@@ -179,8 +187,9 @@ class Command(BaseCommand):
                 skipped += 1
                 continue
 
+            base = opts['base_url'].rstrip('/')
             intro = _draft_intro(user, jobs)
-            body  = _build_body(intro, jobs, opts['base_url'].rstrip('/'))
+            body  = _build_body(intro, jobs, base, user)
             subject = f'{len(jobs)} new flexible role{"s" if len(jobs) != 1 else ""} for you'
 
             if opts['dry_run']:

@@ -69,6 +69,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'hirely.context_processors.analytics_keys',
             ],
         },
     },
@@ -79,6 +80,8 @@ WSGI_APPLICATION = 'hirely.wsgi.application'
 # Anthropic API — powers the "Talk to Hirely" chat agent.
 # Set ANTHROPIC_API_KEY in your env (.env locally, Render dashboard in prod).
 ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
+POSTHOG_API_KEY   = config('POSTHOG_API_KEY', default='')
+SENTRY_DSN        = config('SENTRY_DSN', default='')
 
 
 # Database

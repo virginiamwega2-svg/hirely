@@ -14,8 +14,9 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
-from .models import Job, Application
+from .models import Job, Application, SavedJob, DigestOptOut
 from .forms import RegisterForm, JobForm, ApplicationForm
+from hirely.ratelimit import rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -127,9 +128,17 @@ def job_detail(request, pk):
     has_applied = False
     if request.user.is_authenticated:
         has_applied = Application.objects.filter(job=job, applicant=request.user).exists()
-    return render(request, 'jobs/job_detail.html', {'job': job, 'has_applied': has_applied})
+    is_saved = False
+    if request.user.is_authenticated:
+        is_saved = SavedJob.objects.filter(job=job, user=request.user).exists()
+    return render(request, 'jobs/job_detail.html', {
+        'job': job,
+        'has_applied': has_applied,
+        'is_saved': is_saved,
+    })
 
 
+@rate_limit(max_calls=10, period=300, key_prefix='register')
 def register(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -145,6 +154,7 @@ def register(request):
     return render(request, 'jobs/register.html', {'form': form})
 
 
+@rate_limit(max_calls=10, period=300, key_prefix='login')
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -569,6 +579,7 @@ def _run_search_jobs(params):
     }
 
 
+@rate_limit(max_calls=30, period=60, key_prefix='chat')
 @require_POST
 def chat(request):
     """
@@ -1112,3 +1123,208 @@ def _send_status_change_email(app, previous_status, request):
         recipient_list=[app.applicant.email],
         fail_silently=True,
     )
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Static legal pages
+# ─────────────────────────────────────────────────────────────────────
+
+def privacy(request):
+    return render(request, 'jobs/privacy.html')
+
+
+def terms(request):
+    return render(request, 'jobs/terms.html')
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Save-for-later (bookmark a job)
+# ─────────────────────────────────────────────────────────────────────
+
+@login_required
+def my_saved_jobs(request):
+    saved = SavedJob.objects.filter(user=request.user).select_related('job')
+    return render(request, 'jobs/my_saved_jobs.html', {'saved_jobs': saved})
+
+
+@login_required
+@require_POST
+def toggle_save_job(request, pk):
+    job = get_object_or_404(Job, pk=pk, is_active=True)
+    obj, created = SavedJob.objects.get_or_create(user=request.user, job=job)
+    if not created:
+        obj.delete()
+        messages.success(request, f'Removed "{job.title}" from your saved roles.')
+    else:
+        messages.success(request, f'Saved "{job.title}" — find it in Saved Roles.')
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse('my_saved_jobs')
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = reverse('my_saved_jobs')
+    return redirect(next_url)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# AI job description writer — employer types one sentence, gets a
+# full description + requirements draft back as JSON.
+# ─────────────────────────────────────────────────────────────────────
+
+DRAFT_JOB_SYSTEM_PROMPT = """You help employers write clear, parent-friendly job listings for Hirely — a platform for parents seeking flexible work.
+
+Output STRICT JSON ONLY — no prose around it. Shape:
+{
+  "description": "<3-5 sentence role description>",
+  "requirements": "<2-4 bullet points as plain text, one per line, starting with '- '>"
+}
+
+Rules:
+- Write in plain English. No corporate jargon.
+- Lead the description with WHAT the parent will actually do day-to-day, not company history.
+- Mention the flexibility angle naturally (when the work happens, remote/on-site, hours).
+- Requirements should be realistic and parent-friendly. Do NOT require things the brief doesn't mention.
+- Keep the tone warm but professional.
+- Do NOT invent salary, company name, or location — stick to what the employer told you.
+"""
+
+
+@login_required
+@require_POST
+def draft_job_description(request):
+    if not settings.ANTHROPIC_API_KEY:
+        return JsonResponse({'error': "AI writer isn't connected yet — add your Anthropic credits first."}, status=200)
+
+    brief = (request.POST.get('brief') or '').strip()[:600]
+    title = (request.POST.get('title') or '').strip()[:200]
+    schedule = (request.POST.get('schedule_type') or 'flexible').strip()
+    hours = (request.POST.get('hours_per_day') or '').strip()
+    is_remote = request.POST.get('is_remote') == 'true'
+
+    if not brief:
+        return JsonResponse({'error': 'Please describe the role in one sentence first.'}, status=400)
+
+    user_prompt = (
+        f"Role title: {title or '(not yet filled in)'}\n"
+        f"Schedule: {schedule}{' · remote' if is_remote else ' · on-site'}"
+        f"{f' · {hours} hrs/day' if hours else ''}\n"
+        f"Employer's brief: {brief}\n\nWrite the listing now."
+    )
+
+    from anthropic import Anthropic, APIError
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    try:
+        resp = client.messages.create(
+            model=CHAT_MODEL,
+            max_tokens=600,
+            system=DRAFT_JOB_SYSTEM_PROMPT,
+            messages=[{'role': 'user', 'content': user_prompt}],
+        )
+    except APIError as e:
+        msg = str(getattr(e, 'message', '') or e)
+        friendly = (
+            "AI is resting — top up Anthropic credits to use the writer."
+            if 'credit balance' in msg.lower()
+            else "Couldn't draft right now — try again in a moment."
+        )
+        return JsonResponse({'error': friendly}, status=200)
+
+    raw = ''.join(b.text for b in resp.content if getattr(b, 'type', None) == 'text').strip()
+    if raw.startswith('```'):
+        raw = raw.strip('`').lstrip('json').strip()
+    try:
+        data = json.loads(raw)
+        return JsonResponse({
+            'description': str(data.get('description', ''))[:1500],
+            'requirements': str(data.get('requirements', ''))[:800],
+        })
+    except (json.JSONDecodeError, AttributeError):
+        logger.warning('draft_job_description bad JSON: %r', raw[:200])
+        return JsonResponse({'error': 'Got an unexpected response — try again.'}, status=200)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Withdraw application
+# ─────────────────────────────────────────────────────────────────────
+
+@login_required
+def withdraw_application(request, pk):
+    app = get_object_or_404(Application, pk=pk, applicant=request.user)
+    if app.status in ('accepted', 'rejected'):
+        messages.error(request, "You can't withdraw an application that's already been decided.")
+        return redirect('my_applications')
+    if request.method == 'POST':
+        app.delete()
+        messages.success(request, f'Application for "{app.job.title}" withdrawn.')
+        return redirect('my_applications')
+    return render(request, 'jobs/withdraw_application.html', {'app': app})
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Unsubscribe from weekly digest (signed token — no new DB table)
+# ─────────────────────────────────────────────────────────────────────
+
+def unsubscribe_digest(request, token):
+    from django.core import signing
+    try:
+        user_id = signing.loads(token, salt='digest-unsubscribe', max_age=60 * 60 * 24 * 30)
+    except signing.BadSignature:
+        return render(request, 'jobs/unsubscribe.html', {'invalid': True})
+
+    from .models import DigestOptOut
+    user = User.objects.filter(pk=user_id).first()
+    if not user:
+        return render(request, 'jobs/unsubscribe.html', {'invalid': True})
+
+    DigestOptOut.objects.get_or_create(user=user)
+    return render(request, 'jobs/unsubscribe.html', {'email': user.email, 'invalid': False})
+
+
+# ─────────────────────────────────────────────────────────────────────
+# SEO — robots.txt + sitemap.xml
+# ─────────────────────────────────────────────────────────────────────
+
+from django.http import HttpResponse
+
+
+def robots_txt(request):
+    lines = [
+        'User-agent: *',
+        'Disallow: /admin/',
+        'Disallow: /login/',
+        'Disallow: /register/',
+        'Disallow: /me/',
+        'Disallow: /dashboard/',
+        'Disallow: /my-applications/',
+        'Disallow: /saved/',
+        'Disallow: /unsubscribe/',
+        f'Sitemap: {request.scheme}://{request.get_host()}/sitemap.xml',
+    ]
+    return HttpResponse('\n'.join(lines), content_type='text/plain')
+
+
+def sitemap_xml(request):
+    from django.utils.timezone import now
+    jobs = Job.objects.filter(is_active=True).values('pk', 'updated_at').order_by('-updated_at')[:200]
+    base = f'{request.scheme}://{request.get_host()}'
+    today = now().strftime('%Y-%m-%d')
+
+    urls = [
+        f'<url><loc>{base}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>',
+        f'<url><loc>{base}/jobs/</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>',
+        f'<url><loc>{base}/about/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>',
+        f'<url><loc>{base}/privacy/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>',
+        f'<url><loc>{base}/terms/</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>',
+    ]
+    for job in jobs:
+        lastmod = job['updated_at'].strftime('%Y-%m-%d') if job['updated_at'] else today
+        urls.append(
+            f'<url><loc>{base}/jobs/{job["pk"]}/</loc>'
+            f'<lastmod>{lastmod}</lastmod>'
+            f'<changefreq>weekly</changefreq><priority>0.8</priority></url>'
+        )
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + '\n'.join(urls)
+        + '\n</urlset>'
+    )
+    return HttpResponse(xml, content_type='application/xml')

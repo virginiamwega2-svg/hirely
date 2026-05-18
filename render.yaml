@@ -10,7 +10,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: hirely.onrender.com
+        value: hirely.onrender.com,hirely.app,www.hirely.app
       # DATABASE_URL is now set manually in the Render dashboard
       # (points to Neon — see neon.tech project "hirely").
       - key: DATABASE_URL
@@ -43,7 +43,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: hirely.onrender.com
+        value: hirely.onrender.com,hirely.app,www.hirely.app
       - key: DATABASE_URL
         sync: false
       # Real email delivery via Resend SMTP. Set EMAIL_HOST_PASSWORD
@@ -72,7 +72,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: hirely.onrender.com
+        value: hirely.onrender.com,hirely.app,www.hirely.app
       - key: DATABASE_URL
         sync: false
       # Real email delivery via Resend SMTP. Set EMAIL_HOST_PASSWORD

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Unsubscribe — Hirely{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px;">
+    <div class="card p-4 p-md-5 mt-5 text-center">
+        {% if invalid %}
+            <div style="font-size:2.5rem;"><i class="bi bi-exclamation-circle" style="color:var(--muted);"></i></div>
+            <h2 class="fw-bold mt-3 mb-2" style="font-size:1.4rem;">That link has expired</h2>
+            <p class="text-quiet mb-4">Unsubscribe links are valid for 30 days. Log in and update your preferences from your profile.</p>
+            <a href="{% url 'login' %}" class="btn btn-outline-secondary px-4">Log in</a>
+        {% else %}
+            <div style="font-size:2.5rem;"><i class="bi bi-check-circle-fill" style="color:var(--primary);"></i></div>
+            <h2 class="fw-bold mt-3 mb-2" style="font-size:1.4rem;">You're unsubscribed</h2>
+            <p class="text-quiet mb-4">
+                <strong>{{ email }}</strong> will no longer receive the weekly job digest.<br>
+                You can still log in and browse roles any time.
+            </p>
+            <a href="{% url 'job_list' %}" class="btn btn-primary px-4">Browse roles</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

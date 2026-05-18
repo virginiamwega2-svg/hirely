@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Policy — Hirely{% endblock %}
+{% block meta_description %}How Hirely collects, uses, and protects your personal data.{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px;">
+    <div class="pt-5 pb-2">
+        <h1 class="fw-bold mb-2">Privacy Policy</h1>
+        <p class="text-quiet" style="font-size:.9rem;">Last updated: May 2026</p>
+    </div>
+
+    <div class="card p-4 p-md-5 mb-5" style="line-height:1.75;">
+
+        <h5 class="fw-bold mb-2">Who we are</h5>
+        <p>Hirely is a job board helping parents find flexible work that fits around family life. When we say "Hirely", "we", or "us", we mean the Hirely service at hirely.app.</p>
+
+        <h5 class="fw-bold mt-4 mb-2">What we collect and why</h5>
+        <p><strong>Account information</strong> — your email address and password, so you can log in and receive notifications about your applications. We never sell your email to third parties.</p>
+        <p><strong>Your CV / resume</strong> — uploaded voluntarily when you apply for a role. We parse it to build your profile and match you to relevant jobs. We store it securely and you can delete it at any time from your profile page.</p>
+        <p><strong>Application data</strong> — which roles you applied for, your optional personal note, and the status of each application. This is shared with the employer who posted the role.</p>
+        <p><strong>Job alert preferences</strong> — the schedule types and filters you set up, so we can send you relevant job alerts.</p>
+        <p><strong>Usage data</strong> — pages visited, interactions with the chat agent, and errors, collected via PostHog analytics and Sentry error monitoring. This data is anonymised and used only to improve the product.</p>
+
+        <h5 class="fw-bold mt-4 mb-2">How we use your data</h5>
+        <ul>
+            <li>To operate your account and the application flow</li>
+            <li>To email you status updates on your applications</li>
+            <li>To send a weekly digest of matching roles (you can unsubscribe at any time)</li>
+            <li>To power AI features: job matching, interview prep, and the chat agent. Your data is sent to Anthropic's API for processing — see <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a></li>
+            <li>To fix bugs and improve the site</li>
+        </ul>
+
+        <h5 class="fw-bold mt-4 mb-2">Who we share data with</h5>
+        <p><strong>Employers</strong> — when you apply for a role, the employer sees your name (or email), your optional personal note, and your uploaded CV. They do not see your other applications or profile data.</p>
+        <p><strong>Service providers</strong> — we use Render (hosting), Neon (database), Resend (email), Anthropic (AI), PostHog (analytics), and Sentry (error tracking). Each is bound by their own privacy policies and data processing agreements.</p>
+        <p>We do not sell your personal data to anyone.</p>
+
+        <h5 class="fw-bold mt-4 mb-2">Your rights</h5>
+        <p>You can request a copy of your data, ask us to correct it, or ask us to delete your account and all associated data by emailing <a href="mailto:hello@hirely.app">hello@hirely.app</a>. We'll respond within 30 days.</p>
+
+        <h5 class="fw-bold mt-4 mb-2">Cookies</h5>
+        <p>We use a session cookie to keep you logged in and a CSRF cookie to protect form submissions. We do not use advertising or tracking cookies.</p>
+
+        <h5 class="fw-bold mt-4 mb-2">Data retention</h5>
+        <p>We keep your account data for as long as your account exists. Uploaded CVs are kept until you delete them or close your account. Application records are kept for 12 months after the role closes.</p>
+
+        <h5 class="fw-bold mt-4 mb-2">Contact</h5>
+        <p>Questions or requests: <a href="mailto:hello@hirely.app">hello@hirely.app</a></p>
+    </div>
+</div>
+{% endblock %}

@@ -202,3 +202,25 @@ class DigestLog(models.Model):
 
     def __str__(self):
         return f'Digest for {self.user.email} @ {self.last_sent_at:%Y-%m-%d}'
+
+
+class DigestOptOut(models.Model):
+    """Parent has clicked unsubscribe — never send the weekly digest to them."""
+    user       = models.OneToOneField(User, on_delete=models.CASCADE, related_name='digest_opt_out')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.email} opted out'
+
+
+class SavedJob(models.Model):
+    user     = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_jobs')
+    job      = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='saves')
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'job')
+        ordering = ['-saved_at']
+
+    def __str__(self):
+        return f'{self.user.email} saved {self.job.title}'
