@@ -12,7 +12,7 @@
 
 **🔗 Live demo:** https://hirely-a0lx.onrender.com/ &nbsp;·&nbsp; _hosted on Render free tier — first load may take ~30s to wake the server._
 
-![Hirely home page — chat-first hero and schedule categories](docs/screenshots/home.png)
+![Hirely's AI agent answering a plain-English job search with a real, grounded match — not a hallucinated one](docs/screenshots/ai_chat.png)
 
 ---
 
@@ -50,11 +50,13 @@ All AI runs on **Claude Haiku 4.5** (`claude-haiku-4-5-20251001`) via the Anthro
 
 ## 📸 Screenshots
 
-| Chat-first home | Job listings | Job detail |
-|---|---|---|
-| ![Home](docs/screenshots/home.png) | ![Jobs](docs/screenshots/jobs.png) | ![Job detail](docs/screenshots/job_detail.png) |
+| AI chat in action | Chat-first home |
+|---|---|
+| ![AI chat returning a real job match](docs/screenshots/ai_chat.png) | ![Home](docs/screenshots/home.png) |
+| **Job listings** | **Job detail** |
+| ![Jobs](docs/screenshots/jobs.png) | ![Job detail](docs/screenshots/job_detail.png) |
 
-> _Coming: AI chat conversation, candidate dashboard with "Top matches", and employer applicant-screening view._
+> _Coming: candidate dashboard with "Top matches for you", and the employer applicant-screening view._
 
 ---
 
