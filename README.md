@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/AI-Claude%20Haiku%204.5-D97757?logo=anthropic&logoColor=white" alt="Claude Haiku 4.5">
   <img src="https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render&logoColor=white" alt="Render">
   <a href="https://github.com/virginiamwega2-svg/hirely/actions/workflows/ci.yml"><img src="https://github.com/virginiamwega2-svg/hirely/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
 
 **🔗 Live demo:** https://hirely-a0lx.onrender.com/ &nbsp;·&nbsp; _hosted on Render free tier — first load may take ~30s to wake the server._
@@ -175,3 +176,9 @@ See [`PORTFOLIO.md`](PORTFOLIO.md) for the full case study.
 ## Author
 
 **Virginia Mwega** — full-stack developer building practical, AI-powered tools for real people. Combining product thinking with production backend engineering.
+
+---
+
+## 📄 License
+
+Released under the [MIT License](LICENSE) — © 2026 Virginia Mwega. Free to use, modify, and distribute with attribution.
