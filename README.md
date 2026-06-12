@@ -11,7 +11,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
 
-**🔗 Live demo:** https://hirely-a0lx.onrender.com/ &nbsp;·&nbsp; _hosted on Render free tier — first load may take ~30s to wake the server._
+**🔗 Live demo:** https://hirely-a0lx.onrender.com/
 
 ![Hirely's AI agent answering a plain-English job search with a real, grounded match — not a hallucinated one](docs/screenshots/ai_chat.png)
 
